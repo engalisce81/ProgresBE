@@ -1,33 +1,18 @@
-@@ -1,43 +1,44 @@
 # ===============================
 # Stage 1: Build
 # ===============================
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-
 WORKDIR /src
 
 # انسخ كل الملفات (solution + projects + props/targets)
 COPY . .
 
-
-
-
-
-
 # Restore للسوليوشن
 RUN dotnet restore "Dev.Acadmy.sln"
 
 # Build + Publish لمشروع الـ Host
-
-
-
 WORKDIR /src/src/Dev.Acadmy.HttpApi.Host
 RUN dotnet publish "Dev.Acadmy.HttpApi.Host.csproj" -c Release -o /app/publish
-
-
-
-
-
 
 # ===============================
 # Stage 2: Runtime
@@ -54,4 +39,4 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 RUN mkdir -p /app/Logs
 
 # ENTRYPOINT لتشغيل الـ Host
-ENTRYPOINT ["dotnet", "Dev.Acadmy.HttpApi.Host.dll"]
+ENTRYPOINT ["dotnet", "Dev.Acadmy.HttpApi.Host.dll"] 
