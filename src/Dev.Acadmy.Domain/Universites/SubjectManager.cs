@@ -14,6 +14,10 @@ using Volo.Abp.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
 using Dev.Acadmy.Courses;
+using Dev.Acadmy.Dtos.Response.Subjects;
+using Dev.Acadmy.Dtos.Response.Teachers;
+using Dev.Acadmy.MediaItems;
+using Volo.Abp.Application.Services;
 
 namespace Dev.Acadmy.Universites
 {
@@ -26,8 +30,12 @@ namespace Dev.Acadmy.Universites
         private readonly IIdentityUserRepository _userRepository;
         private readonly CourseManager _courseManager;
         private readonly IRepository<GradeLevel, Guid> _gradeLevelRepository;
-        public SubjectManager(IRepository<GradeLevel, Guid> gradeLevelRepository, CourseManager courseManager, IIdentityUserRepository userRepository, IRepository<College, Guid> collegeRepository, ICurrentUser currentUser, IMapper mapper, IRepository<Subject , Guid> subjectRepository)
+        private readonly IRepository<Courses.Course> _courseRepository;
+        private readonly IRepository<MediaItem, Guid> _mediaItemRepository;
+        public SubjectManager(IRepository<MediaItem, Guid> mediaItemRepository, IRepository<Courses.Course> courseRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, CourseManager courseManager, IIdentityUserRepository userRepository, IRepository<College, Guid> collegeRepository, ICurrentUser currentUser, IMapper mapper, IRepository<Subject , Guid> subjectRepository)
         {
+            _mediaItemRepository = mediaItemRepository;
+            _courseRepository = courseRepository;
             _gradeLevelRepository = gradeLevelRepository;
             _courseManager = courseManager;
             _userRepository = userRepository;
@@ -173,5 +181,87 @@ namespace Dev.Acadmy.Universites
             var subjectDtos = _mapper.Map<List<LookupDto>>(subjects);
             return new PagedResultDto<LookupDto>(subjectDtos.Count, subjectDtos);
         }
+
+
+
+        public async Task<PagedResultDto<SubjectWithTeachersDto>> GetSubjectsWithTeachersAsync(
+    int pageNumber = 1,
+    int pageSize = 10,
+    string? search = null)
+        {
+            // 1️⃣ جلب كل المواد
+            var subjectsQuery = await _subjectRepository.GetQueryableAsync();
+
+            // 1a️⃣ Apply search
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                subjectsQuery = subjectsQuery
+                    .Where(s => s.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var totalCount = await subjectsQuery.CountAsync();
+
+            // 2️⃣ Pagination
+            var subjectsList = await subjectsQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var subjectIds = subjectsList.Select(x => x.Id).ToList();
+
+            // 3️⃣ جلب الكورسات المرتبطة بهذه المواد
+            var coursesList = await (await _courseRepository.GetQueryableAsync())
+                .Where(c => c.SubjectId != null && subjectIds.Contains(c.SubjectId.Value))
+                .Include(c => c.User)
+                .ToListAsync();
+
+            // 4️⃣ جلب المدرسين
+            var teacherIds = coursesList.Select(c => c.UserId).Distinct().ToList();
+            var teachers = coursesList.Select(c => c.User).ToList();
+
+            // 5️⃣ جلب الصور من MediaItems
+            var mediaItems = await (await _mediaItemRepository.GetQueryableAsync())
+                .Where(m => teacherIds.Contains(m.RefId))
+                .ToListAsync();
+
+            var mediaDict = mediaItems
+                .GroupBy(m => m.RefId)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.Url);
+
+            var random = new Random();
+
+            // 6️⃣ Projection لكل مادة
+            var result = subjectsList.Select(subject =>
+            {
+                var subjectTeachers = coursesList
+                    .Where(c => c.SubjectId == subject.Id)
+                    .Select(c => c.User)
+                    .GroupBy(u => u.Id) // المدرس يظهر مرة واحدة لكل مادة
+                    .Select(g => g.First())
+                    .Select(t => new TeacherTopDto
+                    {
+                        Id = t.Id,
+                        TeacherName = t.UserName,
+                        TeacherImage = mediaDict.ContainsKey(t.Id) ? mediaDict[t.Id] : null,
+                        SubjectName = subject.Name,
+                        Rating = Math.Round(random.NextDouble() * 5, 1)
+                    })
+                    .ToList();
+
+                return new SubjectWithTeachersDto
+                {
+                    Id = subject.Id,
+                    Name = subject.Name,
+                    Teachers = subjectTeachers
+                };
+            }).ToList();
+
+            // 7️⃣ إرجاع النتائج مع Pagination
+            return new PagedResultDto<SubjectWithTeachersDto>(totalCount, result);
+        }
+
+
     }
+
 }
+
