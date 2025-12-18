@@ -25,7 +25,6 @@ namespace Dev.Acadmy.Repositories
             return await dbContext.Set<CourseFeedback>()
                 .Include(x => x.User)
                 // الفلترة: التقييمات المقبولة فقط لهذا الكورس المحدد
-                .Where(x => x.CourseId == courseId && x.IsAccept)
                 .OrderByDescending(x => x.CreationTime)
                 .Select(f => new FeedbackDto
                 {
