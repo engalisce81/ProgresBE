@@ -91,7 +91,7 @@ namespace Dev.Acadmy.Services.Courses
                 await _feedbackManager.ChangeAcceptanceStatusAsync(
                     id,
                     isAccept,
-                    CurrentUser.IsInRole(RoleConsts.Admin)
+                    CurrentUser.IsInRole(RoleConsts.Admin.ToLower())
                 );
 
                 return new ResponseApi<bool>
