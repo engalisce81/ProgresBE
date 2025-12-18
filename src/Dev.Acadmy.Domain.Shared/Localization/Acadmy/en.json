@@ -4,6 +4,19 @@
     "AppName": "Acadmy",
     "Menu:Home": "Home",
     "Welcome": "Welcome",
-    "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io."
+    "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
+    "Menu:CourseFeedbacks": "Course Feedbacks",
+    "Permission:CourseFeedbacks": "Course Feedbacks Management",
+    "Permission:CourseFeedbacks.Create": "Create Feedback",
+    "Permission:CourseFeedbacks.Edit": "Edit Feedback",
+    "Permission:CourseFeedbacks.Delete": "Delete Feedback",
+    "Permission:CourseFeedbacks.View": "View Feedbacks",
+    "Permission:CourseFeedbacks.Accept": "Accept/Reject Feedbacks",
+
+    "Feedback:CreatedSuccessfully": "Your feedback has been submitted and is under review",
+    "Feedback:UpdatedSuccessfully": "Feedback updated successfully",
+    "Feedback:DeletedSuccessfully": "Feedback deleted successfully",
+    "Feedback:StatusChanged": "Acceptance status updated successfully",
+    "Feedback:NotAllowed": "You don't have permission for this action"
   }
 }

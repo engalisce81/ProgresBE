@@ -1,24 +1,20 @@
 ﻿using Dev.Acadmy.AccountTypes;
+using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.LookUp;
+using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Response;
-using Dev.Acadmy.Teachers;
 using Dev.Acadmy.Universites;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Domain.Repositories;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Identity;
-using Volo.Abp.Data;
-using Dev.Acadmy.MediaItems;
-using Microsoft.EntityFrameworkCore;
-using Dev.Acadmy.Dtos.Response.Teachers;
-using Dev.Acadmy.Dtos.Response.Courses;
-using Dev.Acadmy.Courses;
 
 namespace Dev.Acadmy.Teachers
 {
@@ -35,9 +31,9 @@ namespace Dev.Acadmy.Teachers
         private readonly IRepository<Term, Guid> _termRepository;
         private readonly MediaItemManager _mediaItemManager;
         private readonly IRepository<MediaItem, Guid> _mediaItemRepsitory;
-        private readonly IRepository<Courses.Course> _courseRepository;
+        private readonly IRepository<Entities.Courses.Entities.Course> _courseRepository;
         private readonly IRepository<CourseStudent, Guid> _courseStudentRepository;
-        public TeacherManager(IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Courses.Course> courseRepository, IRepository<MediaItem, Guid> mediaItemRepsitory, MediaItemManager mediaItemManager, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<Subject, Guid> subjectRepository, IIdentityRoleRepository roleRepository, IIdentityUserRepository userRepository, IRepository<AccountType, Guid> accountTypeRepository, IdentityUserManager userManager)
+        public TeacherManager(IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Entities.Courses.Entities.Course> courseRepository, IRepository<MediaItem, Guid> mediaItemRepsitory, MediaItemManager mediaItemManager, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<Subject, Guid> subjectRepository, IIdentityRoleRepository roleRepository, IIdentityUserRepository userRepository, IRepository<AccountType, Guid> accountTypeRepository, IdentityUserManager userManager)
         {
             _courseStudentRepository = courseStudentRepository; 
             _courseRepository = courseRepository;

@@ -1,4 +1,4 @@
-﻿using Dev.Acadmy.Courses;
+﻿using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Response;
 using Dev.Acadmy.Universites;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +18,7 @@ namespace Dev.Acadmy.Homes
 {
     public class HomeManager : DomainService
     {
-        private readonly IRepository<Courses.Course, Guid> _courseRepository;
+        private readonly IRepository<Entities.Courses.Entities.Course, Guid> _courseRepository;
         private readonly IRepository<CourseStudent, Guid> _courseStudentRepository;
         private readonly IIdentityUserRepository _userRepository;
         private readonly IdentityUserManager _userManager;
@@ -27,7 +27,7 @@ namespace Dev.Acadmy.Homes
         private readonly IRepository<College, Guid> _collegeRepository;
         private readonly IRepository<GradeLevel, Guid> _gradeLevelRepository;
         private readonly IRepository<Term, Guid> _termRepository;
-        public HomeManager(IRepository<Term, Guid> termRepository, IRepository<College, Guid> collegeRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, ICurrentUser currentUser, IdentityUserManager userManager, IIdentityUserRepository userRepository, IRepository<Courses.Course, Guid> courseRepository , IRepository<CourseStudent, Guid> courseStudentRepository)
+        public HomeManager(IRepository<Term, Guid> termRepository, IRepository<College, Guid> collegeRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, ICurrentUser currentUser, IdentityUserManager userManager, IIdentityUserRepository userRepository, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository , IRepository<CourseStudent, Guid> courseStudentRepository)
         {
             _termRepository = termRepository;
             _collegeRepository = collegeRepository;

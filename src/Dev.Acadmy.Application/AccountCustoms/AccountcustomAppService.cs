@@ -3,7 +3,6 @@ using Dev.Acadmy.LookUp;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;

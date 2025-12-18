@@ -1,5 +1,4 @@
-﻿using Dev.Acadmy.Dtos.Response.Teachers;
-using Dev.Acadmy.Permissions;
+﻿using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
 using System;

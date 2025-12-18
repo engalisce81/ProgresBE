@@ -17,6 +17,6 @@ namespace Dev.Acadmy.Exams
         public bool IsActive {  get; set; }
         public Guid CourseId { get; set; }
         [ForeignKey(nameof(CourseId))]
-        public Courses.Course Course { get; set; }  
+        public Entities.Courses.Entities.Course Course { get; set; }  
     }
 }

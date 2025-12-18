@@ -13,7 +13,16 @@ public static class AcadmyPermissions
         public const string View = Default + ".View";
         public const string Publish = Default + ".Publish";
     }
-
+    // أضف هذه المجموعة للتقييمات
+    public static class CourseFeedbacks
+    {
+        public const string Default = GroupName + ".CourseFeedbacks";
+        public const string Create = Default + ".Create";
+        public const string Edit = Default + ".Edit";
+        public const string Delete = Default + ".Delete";
+        public const string View = Default + ".View";
+        public const string Accept = Default + ".Accept"; // صلاحية القبول الخاصة بالأدمن
+    }
     public static class Supports
     {
         public const string Default = GroupName + ".Supports";

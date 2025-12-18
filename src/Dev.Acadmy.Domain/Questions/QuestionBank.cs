@@ -8,7 +8,7 @@ namespace Dev.Acadmy.Questions
     {
         public string Name { get; set; }
         public Guid CourseId { get; set; }
-        public Courses.Course Course { get;set; }
+        public Entities.Courses.Entities.Course Course { get;set; }
         public ICollection<Question> Questions { get; set; }=new List<Question>();
     }
 }

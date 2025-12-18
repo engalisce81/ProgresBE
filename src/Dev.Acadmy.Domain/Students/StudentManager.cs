@@ -14,9 +14,9 @@ using Volo.Abp;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Data;
-using Dev.Acadmy.Courses;
 using Microsoft.EntityFrameworkCore;
 using Dev.Acadmy.MediaItems;
+using Dev.Acadmy.Entities.Courses.Entities;
 
 namespace Dev.Acadmy.Students
 {

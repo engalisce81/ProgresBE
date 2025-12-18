@@ -12,7 +12,7 @@ namespace Dev.Acadmy.Universites
         [ForeignKey(nameof(UniversityId))]  
         public University? University { get; set; }
         public ICollection<GradeLevel> GradeLevels { get; set; } = new List<GradeLevel>();
-        public ICollection <Courses.Course> Courses { get; set; }   = new List<Courses.Course>();
+        public ICollection <Entities.Courses.Entities.Course> Courses { get; set; }   = new List<Entities.Courses.Entities.Course>();
         public ICollection<Subject> Subjects { get; set; } = new List<Subject>();
     }
 }

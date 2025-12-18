@@ -4,6 +4,19 @@
     "AppName": "Acadmy",
     "Menu:Home": "الصفحة الرئيسية",
     "Welcome": "مرحباً",
-    "LongWelcomeMessage": "مرحبا بكم في التطبيق. هذا مشروع بدء تشغيل يعتمد على إطار عمل ABP. لمزيد من المعلومات ، يرجى زيارة abp.io."
+    "LongWelcomeMessage": "مرحبا بكم في التطبيق. هذا مشروع بدء تشغيل يعتمد على إطار عمل ABP. لمزيد من المعلومات ، يرجى زيارة abp.io.",
+    "Menu:CourseFeedbacks": "تقييمات الكورسات",
+    "Permission:CourseFeedbacks": "إدارة تقييمات الكورسات",
+    "Permission:CourseFeedbacks.Create": "إضافة تقييم",
+    "Permission:CourseFeedbacks.Edit": "تعديل تقييم",
+    "Permission:CourseFeedbacks.Delete": "حذف تقييم",
+    "Permission:CourseFeedbacks.View": "عرض التقييمات",
+    "Permission:CourseFeedbacks.Accept": "اعتماد التقييمات",
+
+    "Feedback:CreatedSuccessfully": "تم إرسال تقييمك بنجاح وهو قيد المراجعة",
+    "Feedback:UpdatedSuccessfully": "تم تحديث التقييم بنجاح",
+    "Feedback:DeletedSuccessfully": "تم حذف التقييم بنجاح",
+    "Feedback:StatusChanged": "تم تحديث حالة القبول بنجاح",
+    "Feedback:NotAllowed": "ليس لديك صلاحية للقيام بهذا الإجراء"
   }
 }

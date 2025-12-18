@@ -1,4 +1,6 @@
 ﻿
+using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Entities.Courses.Managers;
 using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;

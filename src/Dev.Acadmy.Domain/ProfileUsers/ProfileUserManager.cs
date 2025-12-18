@@ -1,6 +1,6 @@
 ﻿using Dev.Acadmy.AccountTypes;
 using Dev.Acadmy.Chapters;
-using Dev.Acadmy.Courses;
+using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Response;
@@ -28,10 +28,10 @@ namespace Dev.Acadmy.ProfileUsers
         private readonly IRepository<GradeLevel, Guid> _gradeLevelRepository;
         private readonly IRepository<Term, Guid> _termRepository;
         private readonly IRepository<CourseStudent, Guid> _courseStudentRepository;
-        private readonly IRepository<Courses.Course,Guid> _courseRepository;
+        private readonly IRepository<Entities.Courses.Entities.Course,Guid> _courseRepository;
         private readonly IRepository<Lecture ,Guid> _lectureRepository;
         private readonly IRepository<Chapter,Guid> _chapterRepository;
-        public ProfileUserManager(IRepository<Chapter, Guid> chapterRepository, IRepository<Lecture, Guid> lectureRepository, IRepository<Courses.Course, Guid> courseRepository, IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<AccountType, Guid> accountTypeRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IIdentityUserRepository userRepository) 
+        public ProfileUserManager(IRepository<Chapter, Guid> chapterRepository, IRepository<Lecture, Guid> lectureRepository, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<AccountType, Guid> accountTypeRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IIdentityUserRepository userRepository) 
         {
             _chapterRepository = chapterRepository;
             _lectureRepository = lectureRepository;

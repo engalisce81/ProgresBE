@@ -29,8 +29,8 @@ namespace Dev.Acadmy.Chapters
         private readonly MediaItemManager _mediaItemManager;
         private readonly IRepository<LectureStudent ,Guid> _lectureStudentRepository;
         private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
-        private readonly IRepository<Courses.Course , Guid> _courseRepository;  
-        public ChapterManager(IRepository<Courses.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Chapter> chapterRepository)
+        private readonly IRepository<Entities.Courses.Entities.Course , Guid> _courseRepository;  
+        public ChapterManager(IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Chapter> chapterRepository)
         {
             _courseRepository = courseRepository;
             _lectureTryRepository = lectureTryRepository;

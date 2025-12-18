@@ -1,23 +1,20 @@
 ﻿using AutoMapper;
+using Dev.Acadmy.Entities.Courses.Managers;
+using Dev.Acadmy.LookUp;
+using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Response;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
-using Dev.Acadmy.LookUp;
-using Volo.Abp.Data;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
-using Dev.Acadmy.Courses;
-using Dev.Acadmy.Dtos.Response.Subjects;
-using Dev.Acadmy.Dtos.Response.Teachers;
-using Dev.Acadmy.MediaItems;
-using Volo.Abp.Application.Services;
 
 namespace Dev.Acadmy.Universites
 {
@@ -30,9 +27,9 @@ namespace Dev.Acadmy.Universites
         private readonly IIdentityUserRepository _userRepository;
         private readonly CourseManager _courseManager;
         private readonly IRepository<GradeLevel, Guid> _gradeLevelRepository;
-        private readonly IRepository<Courses.Course> _courseRepository;
+        private readonly IRepository<Entities.Courses.Entities.Course> _courseRepository;
         private readonly IRepository<MediaItem, Guid> _mediaItemRepository;
-        public SubjectManager(IRepository<MediaItem, Guid> mediaItemRepository, IRepository<Courses.Course> courseRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, CourseManager courseManager, IIdentityUserRepository userRepository, IRepository<College, Guid> collegeRepository, ICurrentUser currentUser, IMapper mapper, IRepository<Subject , Guid> subjectRepository)
+        public SubjectManager(IRepository<MediaItem, Guid> mediaItemRepository, IRepository<Entities.Courses.Entities.Course> courseRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, CourseManager courseManager, IIdentityUserRepository userRepository, IRepository<College, Guid> collegeRepository, ICurrentUser currentUser, IMapper mapper, IRepository<Subject , Guid> subjectRepository)
         {
             _mediaItemRepository = mediaItemRepository;
             _courseRepository = courseRepository;

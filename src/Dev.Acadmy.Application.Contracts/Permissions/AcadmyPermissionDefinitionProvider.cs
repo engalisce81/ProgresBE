@@ -58,6 +58,14 @@ public class AcadmyPermissionDefinitionProvider : PermissionDefinitionProvider
         courses.AddChild(AcadmyPermissions.Courses.View, L("Permission:Courses.View"));
         courses.AddChild(AcadmyPermissions.Courses.Publish, L("Permission:Courses.Publish"));
 
+
+        var courseFeedback = group.AddPermission(AcadmyPermissions.CourseFeedbacks.Default, L("Permission:CourseFeedbacks"));
+        courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.Create, L("Permission:CourseFeedbacks.Create"));
+        courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.Edit, L("Permission:CourseFeedbacks.Edit"));
+        courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.Delete, L("Permission:CourseFeedbacks.Delete"));
+        courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.View, L("Permission:CourseFeedbacks.View"));
+        courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.Accept, L("Permission:CourseFeedbacks.Accept"));
+
         // Chapters
         var chapters = group.AddPermission(AcadmyPermissions.Chapters.Default, L("Permission:Chapters"));
         chapters.AddChild(AcadmyPermissions.Chapters.Create, L("Permission:Chapters.Create"));

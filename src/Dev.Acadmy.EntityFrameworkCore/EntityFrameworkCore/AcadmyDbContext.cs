@@ -1,9 +1,15 @@
 ﻿using Dev.Acadmy.AccountTypes;
 using Dev.Acadmy.Chapters;
+using Dev.Acadmy.Courses;
+using Dev.Acadmy.Emails;
+using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Exams;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Questions;
 using Dev.Acadmy.Quizzes;
+using Dev.Acadmy.Supports;
+using Dev.Acadmy.Universites;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
@@ -18,11 +24,6 @@ using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
-using Dev.Acadmy.Courses;
-using Dev.Acadmy.Universites;
-using Dev.Acadmy.Emails;
-using Dev.Acadmy.Exams;
-using Dev.Acadmy.Supports;
 
 namespace Dev.Acadmy.EntityFrameworkCore;
 
@@ -64,8 +65,8 @@ public class AcadmyDbContext :
 
     #endregion
 
-    public DbSet<Courses.Course> Courses { get; set; }
-    public DbSet<Courses.CourseStudent> CourseStudents { get; set; }
+    public DbSet<Entities.Courses.Entities.Course> Courses { get; set; }
+    public DbSet<CourseStudent> CourseStudents { get; set; }
     public DbSet<College> Colleges { get; set; }
     public DbSet<Lecture> Lectures { get; set; }
     public DbSet<Quiz> Quizzes { get; set; }
@@ -90,6 +91,7 @@ public class AcadmyDbContext :
     public DbSet<QuizStudentAnswer> QuizStudentAnswer { get; set; }
     public DbSet<Support> Supports { get; set; }   
     public DbSet<ExamQuestion> ExamQuestions { get; set; }
+    public DbSet<CourseFeedback> CourseFeedbacks { get; set; }
 
     public AcadmyDbContext(DbContextOptions<AcadmyDbContext> options)
         : base(options)

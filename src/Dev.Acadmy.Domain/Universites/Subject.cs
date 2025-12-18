@@ -14,6 +14,6 @@ namespace Dev.Acadmy.Universites
         public GradeLevel? GradeLevel{ get; set;}
         [ForeignKey(nameof(TermId))]
         public Term? Term { get; set;}
-        public ICollection<Courses.Course> Courses { get; set; } = new List<Courses.Course>();
+        public ICollection<Entities.Courses.Entities.Course> Courses { get; set; } = new List<Entities.Courses.Entities.Course>();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Dev.Acadmy.Lectures;
+﻿using Dev.Acadmy.Entities.Courses.Managers;
+using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
 using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Response;

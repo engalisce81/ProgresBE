@@ -1,21 +1,13 @@
-﻿
-using Dev.Acadmy;
-using Dev.Acadmy.Courses;
-using Dev.Acadmy.Questions;
+﻿using Dev.Acadmy.Entities.Courses.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Volo.Abp.EntityFrameworkCore.Modeling;
 
 namespace Dev.Acadmy.Configuration
 {
-    public class CourseConfiguration : IEntityTypeConfiguration<Courses.Course>
+    public class CourseConfiguration : IEntityTypeConfiguration<Entities.Courses.Entities.Course>
     {
-        public void Configure(EntityTypeBuilder<Courses.Course> builder)
+        public void Configure(EntityTypeBuilder<Entities.Courses.Entities.Course> builder)
         {
             builder.ToTable(AcadmyConsts.DbTablePrefix +"Courses" + AcadmyConsts.DbSchema);
 

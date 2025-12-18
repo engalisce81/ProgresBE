@@ -1,9 +1,7 @@
 ﻿using Dev.Acadmy.Chapters;
+using Dev.Acadmy.Dtos.Response.Courses;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dev.Acadmy.Courses
 {
@@ -34,6 +32,7 @@ namespace Dev.Acadmy.Courses
         public int? DurationInWeeks { get; set; } // null if lifetime
         public ICollection<string> Infos { get;set;} = new List<string>();
         public ICollection<CourseChaptersDto> courseChaptersDtos { get; set; } = new List<CourseChaptersDto>();
+        public ICollection<FeedbackDto> Feedbacks { get; set; } = new List<FeedbackDto>();
 
 
     }
