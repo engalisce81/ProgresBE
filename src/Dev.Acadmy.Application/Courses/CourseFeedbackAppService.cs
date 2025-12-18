@@ -1,12 +1,18 @@
 ﻿using Dev.Acadmy.Dtos.Request.Courses;
+using Dev.Acadmy.Dtos.Response.Courses;
+using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Entities.Courses.Managers;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Permissions; // تأكد من استدعاء ملف الـ Permissions
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.ObjectMapping;
 using Volo.Abp.Users;
 
 namespace Dev.Acadmy.Services.Courses
@@ -18,13 +24,16 @@ namespace Dev.Acadmy.Services.Courses
         {
             private readonly ICourseFeedbackRepository _feedbackRepo;
             private readonly CourseFeedbackManager _feedbackManager;
+            private readonly IMediaItemRepository _mediaItemRepo;
 
             public CourseFeedbackAppService(
                 ICourseFeedbackRepository feedbackRepo,
-                CourseFeedbackManager feedbackManager)
+                CourseFeedbackManager feedbackManager,
+                IMediaItemRepository mediaItemRepo)
             {
                 _feedbackRepo = feedbackRepo;
                 _feedbackManager = feedbackManager;
+                _mediaItemRepo = mediaItemRepo;
             }
 
             [Authorize(AcadmyPermissions.CourseFeedbacks.Create)]
@@ -45,6 +54,28 @@ namespace Dev.Acadmy.Services.Courses
                     Success = true,
                     Message = L["Feedback:CreatedSuccessfully"]
                 };
+            }
+
+
+            [Authorize(AcadmyPermissions.CourseFeedbacks.View)]
+            public async Task<PagedResultDto<FeedbackDto>> GetFeedbacksByCourseId(Guid courseId)
+            {
+                // 1. جلب التقييمات المرتبطة بالكورس
+                var feedbacks = await _feedbackRepo.GetListFeedbacksByCourseIdAsync(courseId);
+                // 3. جلب صور المستخدمين بناءً على الـ UserIds
+                var userIds = feedbacks.Select(x => x.UserId).ToList();
+                var mediaDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync(userIds);
+                // 4. ربط الصور بالـ DTOs داخل اللوب
+                foreach (var dto in feedbacks)
+                {
+                    // نتحقق إذا كان المستخدم له صورة في القاموس، إذا لم يوجد نضع صورة افتراضية
+                    if (mediaDic.TryGetValue(dto.UserId, out var imageUrl))    dto.LogoUrl = imageUrl; 
+                }
+                // 5. إرجاع النتيجة بتنسيق PagedResultDto
+                return new PagedResultDto<FeedbackDto>(
+                    feedbacks.Count, // إجمالي العدد
+                    feedbacks        // القائمة
+                );
             }
 
             [Authorize(AcadmyPermissions.CourseFeedbacks.Edit)]
@@ -91,7 +122,7 @@ namespace Dev.Acadmy.Services.Courses
                 await _feedbackManager.ChangeAcceptanceStatusAsync(
                     id,
                     isAccept,
-                    CurrentUser.IsInRole(RoleConsts.Admin)
+                    CurrentUser.IsInRole(RoleConsts.Admin.ToLower())
                 );
 
                 return new ResponseApi<bool>

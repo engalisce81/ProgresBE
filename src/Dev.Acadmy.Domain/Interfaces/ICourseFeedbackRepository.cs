@@ -12,5 +12,7 @@ namespace Dev.Acadmy.Interfaces
     public interface ICourseFeedbackRepository : IRepository<CourseFeedback, Guid>
     {
         Task<List<FeedbackDto>> GetListSumFeedByCourseIdAsync(Guid courseId , int numberFeedback);
+        Task<List<FeedbackDto>> GetListFeedbacksByCourseIdAsync(Guid courseId);
+
     }
 }

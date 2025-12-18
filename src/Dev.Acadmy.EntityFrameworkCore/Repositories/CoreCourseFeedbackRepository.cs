@@ -18,6 +18,27 @@ namespace Dev.Acadmy.Repositories
         public CoreCourseFeedbackRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider) { }
 
+        public async Task<List<FeedbackDto>> GetListFeedbacksByCourseIdAsync(Guid courseId)
+        {
+            var dbContext = await GetDbContextAsync();
+
+            return await dbContext.Set<CourseFeedback>()
+                .Include(x => x.User)
+                // الفلترة: التقييمات المقبولة فقط لهذا الكورس المحدد
+                .Where(x => x.CourseId == courseId && x.IsAccept)
+                .OrderByDescending(x => x.CreationTime)
+                .Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    UserId = f.UserId,
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    UserName = f.User.Name,
+                    LogoUrl = "" // سيتم ملؤها في الـ Application Service من الـ Media Repository
+                })
+                .ToListAsync();
+        }
+
         public async Task<List<FeedbackDto>> GetListSumFeedByCourseIdAsync(Guid courseId, int numberFeedback)
         {
             var dbContext = await GetDbContextAsync();

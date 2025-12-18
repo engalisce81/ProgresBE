@@ -12,13 +12,15 @@ namespace Dev.Acadmy.Entities.Courses.Managers
     {
         private readonly ICourseFeedbackRepository _feedbackRepo;
         private readonly ICourseStudentRepository _courseStudentRepo;
-
+        private readonly IMediaItemRepository _mediaItemRepo;
         public CourseFeedbackManager(
             ICourseFeedbackRepository feedbackRepo,
-            ICourseStudentRepository courseStudentRepo)
+            ICourseStudentRepository courseStudentRepo,
+            IMediaItemRepository mediaItemRepo)
         {
             _feedbackRepo = feedbackRepo;
             _courseStudentRepo = courseStudentRepo;
+            _mediaItemRepo = mediaItemRepo;
         }
 
         /// <summary>
@@ -95,5 +97,6 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 throw new UserFriendlyException("لا تملك صلاحية حذف هذا التقييم");
             }
         }
+
     }
 }
