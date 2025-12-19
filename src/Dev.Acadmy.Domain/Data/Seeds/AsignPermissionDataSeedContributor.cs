@@ -47,6 +47,8 @@ namespace Course.Data.Seeds
             await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseFeedbacks.View, true);
             await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseFeedbacks.Create, true);
             await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseFeedbacks.Edit, true);
+            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseFeedbacks.Delete, true);
+
 
             // 2. صلاحيات المدرس أو الإدمن (Teacher / Admin)
             // المدرس يحتاج كل الصلاحيات بما فيها "القبول" و "الحذف"

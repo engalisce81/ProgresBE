@@ -84,7 +84,7 @@ namespace Dev.Acadmy.Services.Courses
                 var feeedback = await _feedbackManager.UpdateAsync(
                     id,
                     CurrentUser.GetId(),
-                    CurrentUser.IsInRole(RoleConsts.Admin),
+                    CurrentUser.IsInRole(RoleConsts.Admin.ToLower()),
                     input.Rating,
                     input.Comment
                 );

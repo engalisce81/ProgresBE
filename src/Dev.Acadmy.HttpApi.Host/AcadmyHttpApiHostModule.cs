@@ -122,6 +122,7 @@ public class AcadmyHttpApiHostModule : AbpModule
             options.ValueProviders.Add<GlobalSettingValueProvider>();
             options.ValueProviders.Add<DefaultValueSettingValueProvider>();
         });
+
         Configure<AbpSignalROptions>(options =>
         {
             options.Hubs.Add(
@@ -136,9 +137,7 @@ public class AcadmyHttpApiHostModule : AbpModule
                 )
             );
         });
-
         context.Services.AddTransient<ChatHub>();
-
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)

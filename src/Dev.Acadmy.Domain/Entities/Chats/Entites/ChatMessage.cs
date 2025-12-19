@@ -14,7 +14,6 @@ namespace Dev.Acadmy.Entities.Chats.Entites
         public Guid ReceverId { get; set; } // المعرف الخاص بالجروب (الكورس)
         public string Message { get; set; }
         public Guid SenderId { get; set; }
-        [ForeignKey(nameof(SenderId))]
-        public IdentityUser Sender { get; set; }
+       
     }
 }
