@@ -19,7 +19,7 @@ namespace Dev.Acadmy.Chapters
         [Authorize(AcadmyPermissions.Chapters.View)]
         public async Task<ResponseApi<ChapterDto>> GetAsync(Guid id) => await _chapterManager.GetAsync(id);
         [Authorize(AcadmyPermissions.Chapters.View)]
-        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search) => await _chapterManager.GetListAsync(pageNumber, pageSize, search);
+        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid courseId) => await _chapterManager.GetListAsync(pageNumber, pageSize, search,courseId);
         [Authorize(AcadmyPermissions.Chapters.Create)]
         public async Task<ResponseApi<ChapterDto>> CreateAsync(CreateUpdateChapterDto input) => await _chapterManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Chapters.Edit)]
@@ -32,6 +32,5 @@ namespace Dev.Acadmy.Chapters
         public async Task<PagedResultDto<CourseChaptersDto>> GetCourseChaptersAsync(Guid courseId, int pageNumber, int pageSize) => await _chapterManager.GetCourseChaptersAsync(courseId, pageNumber, pageSize);
         [Authorize]
         public async Task<PagedResultDto<LookupDto>> GetChaptersByCourseLookUpAsync(Guid courseId) => await _chapterManager.GetChaptersByCourseLookUpAsync(courseId);
-
     }
 }

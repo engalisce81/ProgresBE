@@ -175,10 +175,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             bool alreadyJoin,
             Guid collegeId,
             Guid? subjectId,
-            Guid? gradelevelId)
+            Guid? gradelevelId,
+            Guid? termId)
         {
             var currentUser = await _userRepository.GetAsync(_currentUser.GetId());
-            var termId = currentUser.GetProperty<Guid?>(SetPropConsts.TermId);
 
             if (collegeId == Guid.Empty)
                 return new PagedResultDto<CourseInfoHomeDto>(0, new List<CourseInfoHomeDto>());

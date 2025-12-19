@@ -29,20 +29,23 @@ public class AcadmyPermissionDefinitionProvider : PermissionDefinitionProvider
         exams.AddChild(AcadmyPermissions.Exams.View, L("Permission:Exams.View"));
         exams.AddChild(AcadmyPermissions.Exams.Delete, L("Permission:Exams.Delete"));
 
-
         var supporsts = group.AddPermission(AcadmyPermissions.Supports.Default, L("Permission:Supports"));
         supporsts.AddChild(AcadmyPermissions.Supports.Create, L("Permission:Supports.Create"));
         supporsts.AddChild(AcadmyPermissions.Supports.Edit, L("Permission:Supports.Edit"));
         supporsts.AddChild(AcadmyPermissions.Supports.View, L("Permission:Supports.View"));
         supporsts.AddChild(AcadmyPermissions.Supports.Delete, L("Permission:Supports.Delete"));
 
+        var advertisements = group.AddPermission(AcadmyPermissions.Advertisements.Default, L("Permission:Advertisements"));
+        advertisements.AddChild(AcadmyPermissions.Advertisements.Create, L("Permission:Advertisements.Create"));
+        advertisements.AddChild(AcadmyPermissions.Advertisements.Edit, L("Permission:Advertisements.Edit"));
+        advertisements.AddChild(AcadmyPermissions.Advertisements.View, L("Permission:Advertisements.View"));
+        advertisements.AddChild(AcadmyPermissions.Advertisements.Delete, L("Permission:Advertisements.Delete"));
 
         var students = group.AddPermission(AcadmyPermissions.Students.Default, L("Permission:Students"));
         students.AddChild(AcadmyPermissions.Students.Create, L("Permission:Students.Create"));
         students.AddChild(AcadmyPermissions.Students.Edit, L("Permission:Students.Edit"));
         students.AddChild(AcadmyPermissions.Students.View, L("Permission:Students.View"));
         students.AddChild(AcadmyPermissions.Students.Delete, L("Permission:Students.Delete"));
-
 
         var teachers = group.AddPermission(AcadmyPermissions.Teachers.Default, L("Permission:Teachers"));
         teachers.AddChild(AcadmyPermissions.Teachers.Create, L("Permission:Teachers.Create"));
@@ -57,7 +60,6 @@ public class AcadmyPermissionDefinitionProvider : PermissionDefinitionProvider
         courses.AddChild(AcadmyPermissions.Courses.Delete, L("Permission:Courses.Delete"));
         courses.AddChild(AcadmyPermissions.Courses.View, L("Permission:Courses.View"));
         courses.AddChild(AcadmyPermissions.Courses.Publish, L("Permission:Courses.Publish"));
-
 
         var courseFeedback = group.AddPermission(AcadmyPermissions.CourseFeedbacks.Default, L("Permission:CourseFeedbacks"));
         courseFeedback.AddChild(AcadmyPermissions.CourseFeedbacks.Create, L("Permission:CourseFeedbacks.Create"));

@@ -26,18 +26,11 @@ namespace Course.Data.Seeds
         public async Task SeedAsync(DataSeedContext context)
         {
             await StudentFeedbackPermission();
-            await StudentCoursePermission();
+            await SetAdvertisementPermissionsAsync();
+            await SetCourseStudentsPermissionsAsync();
         }
 
-        public async Task StudentCoursePermission()
-        {
-            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.Courses.Create, true);
-            
-            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.Courses.Edit, true);
-            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.Courses.View, true);
-            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.Courses.Delete, true);
-            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher , AcadmyPermissions.Courses.Default, true);
-        }
+       
 
         public async Task StudentFeedbackPermission()
         {
@@ -58,6 +51,29 @@ namespace Course.Data.Seeds
             await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.CourseFeedbacks.Edit, true);
             await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.CourseFeedbacks.Delete, true);
             await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.CourseFeedbacks.Accept, true);
+        }
+
+        public async Task SetCourseStudentsPermissionsAsync()
+        {
+            // --- صلاحيات الطالب (Student) ---
+            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseStudents.Default, true);
+            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseStudents.Create, true);
+
+            // --- صلاحيات المدرس (Teacher) ---
+            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.CourseStudents.Default, true);
+            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.CourseStudents.View, true);
+            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.CourseStudents.Create, true);
+        }
+        public async Task SetAdvertisementPermissionsAsync()
+        {
+           
+            // --- صلاحيات المدرس (Teacher) ---
+            // المدرس غالباً يحتاج فقط لرؤية الإعلانات (View)
+            await _permissionManager.SetForRoleAsync(RoleConsts.Teacher, AcadmyPermissions.Advertisements.Default, true);
+
+            // --- صلاحيات الطالب (Student) ---
+            // الطالب يحتاج لرؤية الإعلانات المنشورة له
+            await _permissionManager.SetForRoleAsync(RoleConsts.Student, AcadmyPermissions.Advertisements.Default, true);
         }
 
     }

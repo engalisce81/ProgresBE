@@ -29,9 +29,11 @@ namespace Dev.Acadmy.Chapters
         private readonly MediaItemManager _mediaItemManager;
         private readonly IRepository<LectureStudent ,Guid> _lectureStudentRepository;
         private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
-        private readonly IRepository<Entities.Courses.Entities.Course , Guid> _courseRepository;  
-        public ChapterManager(IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Chapter> chapterRepository)
+        private readonly IRepository<Entities.Courses.Entities.Course , Guid> _courseRepository;
+        private readonly IdentityUserManager _userManager;
+        public ChapterManager(IdentityUserManager userManager, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Chapter> chapterRepository)
         {
+            _userManager = userManager;
             _courseRepository = courseRepository;
             _lectureTryRepository = lectureTryRepository;
             _lectureManger = lectureManger;
@@ -52,16 +54,43 @@ namespace Dev.Acadmy.Chapters
             return new ResponseApi<ChapterDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
-        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid courseId)
         {
-            var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
-            var queryable = (await _chapterRepository.GetQueryableAsync());
-            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x=>x.Course).Where(c => c.Name.Contains(search) || c.Course.Name.Contains(search));
+            var skipCount = (pageNumber - 1) * pageSize;
+            var currentUserId = _currentUser.GetId();
+
+            // 1. إنشاء الاستعلام الأساسي مع Include و فلترة الكورس الإلزامية
+            var queryable = (await _chapterRepository.GetQueryableAsync())
+                .Include(x => x.Course)
+                .Where(x => x.CourseId == courseId); // استخدام الـ courseId الممرر
+
+            // 2. فلترة البحث (إذا وُجد)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                queryable = queryable.Where(c => c.Name.Contains(search) || c.Course.Name.Contains(search));
+            }
+            var user = await _userRepository.GetAsync(currentUserId);
+
+            // 3. منطق الصلاحيات: إذا لم يكن أدمن، يرى فقط ما أنشأه
+            var isAdmin = await _userManager.IsInRoleAsync( user,RoleConsts.Admin.ToLower());
+            if (!isAdmin)
+            {
+                queryable = queryable.Where(c => c.CreatorId == currentUserId);
+            }
+
+            // 4. حساب العدد الإجمالي للنتائج المفلترة
             var totalCount = await AsyncExecuter.CountAsync(queryable);
-            var chapters = new List<Chapter>();  
-            if (roles.Any(x=>x.Name.ToUpper()==RoleConsts.Admin.ToUpper())) chapters = await AsyncExecuter.ToListAsync(queryable.Include(x => x.Course).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            else chapters = await AsyncExecuter.ToListAsync(queryable.Include(x => x.Course).Where(c => c.CreatorId == _currentUser.GetId()).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
+
+            // 5. جلب البيانات بطلب واحد مرتب ومقسم لصفحات
+            var chapters = await AsyncExecuter.ToListAsync(
+                queryable.OrderByDescending(c => c.CreationTime)
+                         .Skip(skipCount)
+                         .Take(pageSize)
+            );
+
+            // 6. التحويل لـ DTO
             var chapterDtos = _mapper.Map<List<ChapterDto>>(chapters);
+
             return new PagedResultDto<ChapterDto>(totalCount, chapterDtos);
         }
 
