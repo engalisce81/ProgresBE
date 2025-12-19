@@ -38,7 +38,9 @@ using Castle.Core.Smtp;
 using Volo.Abp.Emailing.Smtp;
 using Volo.Abp.MailKit;
 using Volo.Abp.Emailing;
-using Volo.Abp.Settings; // هذا مصدر AbpSmtpEmailSenderOptions
+using Volo.Abp.Settings;
+using Dev.Acadmy.Chats;
+using Volo.Abp.AspNetCore.SignalR; // هذا مصدر AbpSmtpEmailSenderOptions
 
 namespace Dev.Acadmy;
 
@@ -120,11 +122,22 @@ public class AcadmyHttpApiHostModule : AbpModule
             options.ValueProviders.Add<GlobalSettingValueProvider>();
             options.ValueProviders.Add<DefaultValueSettingValueProvider>();
         });
-      
-        //Configure<AbpMailKitOptions>(options =>
-        //{
-        //    options.SecureSocketOption = MailKit.Security.SecureSocketOptions.Auto;
-        //});
+        Configure<AbpSignalROptions>(options =>
+        {
+            options.Hubs.Add(
+                new HubConfig(
+                    typeof(ChatHub), //Hub type
+                    "/chat-hub", //Hub route (URL)
+                    hubOptions =>
+                    {
+                        //Additional options
+                        hubOptions.LongPolling.PollTimeout = TimeSpan.FromSeconds(30);
+                    }
+                )
+            );
+        });
+
+        context.Services.AddTransient<ChatHub>();
 
     }
 
@@ -239,7 +252,7 @@ public class AcadmyHttpApiHostModule : AbpModule
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();
         app.UseStaticFiles();
-
+        
         var imagesRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
         if (!Directory.Exists(imagesRootPath))
         {
@@ -277,6 +290,7 @@ public class AcadmyHttpApiHostModule : AbpModule
         app.UseCors();
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
+       
 
         if (MultiTenancyConsts.IsEnabled)
         {
@@ -285,7 +299,7 @@ public class AcadmyHttpApiHostModule : AbpModule
         app.UseUnitOfWork();
         app.UseDynamicClaims();
         app.UseAuthorization();
-
+        
         app.UseSwagger();
         app.UseAbpSwaggerUI(c =>
         {
@@ -299,5 +313,6 @@ public class AcadmyHttpApiHostModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
+        
     }
 }
