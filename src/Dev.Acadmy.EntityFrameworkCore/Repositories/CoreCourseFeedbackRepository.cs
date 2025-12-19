@@ -18,22 +18,33 @@ namespace Dev.Acadmy.Repositories
         public CoreCourseFeedbackRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider) { }
 
-        public async Task<List<FeedbackDto>> GetListFeedbacksByCourseIdAsync(Guid courseId)
+        public async Task<List<FeedbackDto>> GetListFeedbacksByCourseIdAsync(
+     Guid courseId,
+     int pageNumber,
+     int pageSize,
+     bool isAccept)
         {
             var dbContext = await GetDbContextAsync();
 
             return await dbContext.Set<CourseFeedback>()
+                .AsNoTracking() // لتحسين الأداء لأننا نقوم بالقراءة فقط
                 .Include(x => x.User)
-                // الفلترة: التقييمات المقبولة فقط لهذا الكورس المحدد
+                // 1. الفلترة بناءً على الكورس وحالة القبول
+                .Where(x => x.CourseId == courseId && x.IsAccept == isAccept)
+                // الفلترة: التقييمات المقبولة فقط لهذا الكورس المحد
                 .OrderByDescending(x => x.CreationTime)
+                // 3. الترقيم (Pagination)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                // 4. الإسقاط (Projection) لتحويل البيانات إلى DTO
                 .Select(f => new FeedbackDto
                 {
                     Id = f.Id,
                     UserId = f.UserId,
                     Rating = f.Rating,
                     Comment = f.Comment,
-                    UserName = f.User.Name,
-                    LogoUrl = "" // سيتم ملؤها في الـ Application Service من الـ Media Repository
+                    UserName = f.User.Name, // تأكد أن علاقة الـ User معرفة بشكل صحيح
+                    LogoUrl = ""
                 })
                 .ToListAsync();
         }

@@ -58,10 +58,10 @@ namespace Dev.Acadmy.Services.Courses
 
 
             [Authorize(AcadmyPermissions.CourseFeedbacks.View)]
-            public async Task<PagedResultDto<FeedbackDto>> GetFeedbacksByCourseId(Guid courseId)
+            public async Task<PagedResultDto<FeedbackDto>> GetFeedbacksByCourseId(Guid courseId, int pageNumber, int pageSize, bool isAccept)
             {
                 // 1. جلب التقييمات المرتبطة بالكورس
-                var feedbacks = await _feedbackRepo.GetListFeedbacksByCourseIdAsync(courseId);
+                var feedbacks = await _feedbackRepo.GetListFeedbacksByCourseIdAsync(courseId,pageNumber,pageSize , isAccept);
                 // 3. جلب صور المستخدمين بناءً على الـ UserIds
                 var userIds = feedbacks.Select(x => x.UserId).ToList();
                 var mediaDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync(userIds);
