@@ -31,7 +31,7 @@ namespace Dev.Acadmy.Repositories
                 .Include(x => x.User)
                 // 1. الفلترة بناءً على الكورس وحالة القبول
                 .Where(x => x.CourseId == courseId && x.IsAccept == isAccept)
-                // 2. الترتيب من الأحدث للأقدم
+                // الفلترة: التقييمات المقبولة فقط لهذا الكورس المحد
                 .OrderByDescending(x => x.CreationTime)
                 // 3. الترقيم (Pagination)
                 .Skip((pageNumber - 1) * pageSize)
