@@ -90,9 +90,8 @@ namespace Dev.Acadmy.Services
                 input.EndDate,
                 input.IsActive
             );
-            await _mediaItemRepository.InsertAsync(new MediaItem {RefId = ad.Id , IsImage =true , Url = input.ImageUrl});
-            await _adRepository.InsertAsync(ad);
-
+            var result = await _adRepository.InsertAsync(ad);
+            await _mediaItemManager.UpdateAsync(result.Id, new CreateUpdateMediaItemDto { RefId = result.Id, IsImage = true, Url = input.ImageUrl });
             return new ResponseApi<bool>()
             {
                 Data = true,
