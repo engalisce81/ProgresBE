@@ -21,7 +21,7 @@ namespace Dev.Acadmy.Lectures
         [Authorize(AcadmyPermissions.Lectures.View)]
         public async Task<ResponseApi<LectureDto>> GetAsync(Guid id) => await _lectureManager.GetAsync(id);
         [Authorize(AcadmyPermissions.Lectures.View)]
-        public async Task<PagedResultDto<LectureDto>> GetListAsync(int pageNumber, int pageSize, string? search) => await _lectureManager.GetListAsync(pageNumber, pageSize, search);
+        public async Task<PagedResultDto<LectureDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid chapterId) => await _lectureManager.GetListAsync(pageNumber, pageSize, search,chapterId);
         [Authorize(AcadmyPermissions.Lectures.Create)]
         public async Task<ResponseApi<LectureDto>> CreateAsync(CreateUpdateLectureDto input) => await _lectureManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Lectures.Edit)]
