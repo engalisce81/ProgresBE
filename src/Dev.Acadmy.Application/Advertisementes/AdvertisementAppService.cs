@@ -171,35 +171,33 @@ namespace Dev.Acadmy.Services
         }
 
         // 6. جلب قائمة الإعلانات النشطة مع Pagination
+        [Authorize(AcadmyPermissions.Advertisements.Default)]
         public async Task<PagedResultDto<AdvertisementDto>> GetActiveAdsListAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var now = Clock.Now;
+            // استخدام DateTime.Now بدلاً من Clock.Now
+            var now = DateTime.Now;
+
             var skipCount = (pageNumber - 1) * pageSize;
             var queryable = await _adRepository.GetQueryableAsync();
 
-            // 1. فلترة الإعلانات النشطة حالياً
+            // الفلترة
             var query = queryable.Where(x => x.IsActive && x.StartDate <= now && x.EndDate >= now);
 
-            // 2. حساب العدد الإجمالي قبل التقسيم لصفحات
             var totalCount = await AsyncExecuter.CountAsync(query);
 
-            // 3. جلب البيانات المرتبة (الأحدث أولاً) مع Skip و Take
             var ads = await AsyncExecuter.ToListAsync(
                 query.OrderByDescending(x => x.CreationTime)
                      .Skip(skipCount)
                      .Take(pageSize)
             );
 
-            // 4. جلب الصور الخاصة بهذه الإعلانات دفعة واحدة (Batch Loading)
-            // نفترض أن الـ Advertisement يستخدم الـ Id الخاص به كـ RefId في جدول الميديا
+            // باقي الكود كما هو...
             var adIds = ads.Select(x => x.Id).ToList();
             var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(adIds);
 
-            // 5. تحويل البيانات إلى DTO مع دمج روابط الصور كاملة
             var dtos = ads.Select(ad =>
             {
-                var dto = _mapper.Map<AdvertisementDto>(ad);
-                // الحصول على الرابط من القاموس وتحويله لرابط كامل باستخدام ميثود GetFullUrl (الموجودة في الخدمة)
+                var dto = ObjectMapper.Map<Advertisement, AdvertisementDto>(ad);
                 var imageUrl = mediaItemDic.ContainsKey(ad.Id) ? mediaItemDic[ad.Id] : string.Empty;
                 dto.ImageUrl = imageUrl;
                 return dto;

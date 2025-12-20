@@ -1,6 +1,14 @@
 ﻿using AutoMapper;
 using Dev.Acadmy.Chapters;
 using Dev.Acadmy.Courses;
+using Dev.Acadmy.Dtos.Request.Advertisementes;
+using Dev.Acadmy.Dtos.Request.Chats;
+using Dev.Acadmy.Dtos.Request.Courses;
+using Dev.Acadmy.Dtos.Response.Advertisementes;
+using Dev.Acadmy.Dtos.Response.Chats;
+using Dev.Acadmy.Dtos.Response.Courses;
+using Dev.Acadmy.Entities.Advertisementes.Entities;
+using Dev.Acadmy.Entities.Chats.Entites;
 using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Lectures;
@@ -83,6 +91,18 @@ public class AcadmyApplicationAutoMapperProfile : Profile
 
         CreateMap<Exam, ExamDto>();
         CreateMap<CreateUpdateExamDto, Exam>();
+
+        CreateMap<Advertisement, AdvertisementDto>();
+        CreateMap<CreateUpdateAdvertisementDto, Advertisement>();
+
+        CreateMap<ChatMessage, ChatMessageDto>();
+        CreateMap<CreateUpdateChatMessageDto , ChatMessage>();
+
+        CreateMap<CourseFeedback, CourseFeedbackDto>();
+        CreateMap< CourseFeedback , CreateUpdateCourseFeedbackDto>();
+
+
+
 
         CreateMap<LookupDto, QuestionBank>().ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name)); ;
         CreateMap<LookupDto, QuestionType>().ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
