@@ -15,6 +15,7 @@ using Dev.Acadmy.Response;
 using Dev.Acadmy.Questions;
 using Volo.Abp;
 using Dev.Acadmy.MediaItems;
+using Dev.Acadmy.Interfaces;
 namespace Dev.Acadmy.Lectures
 {
     public class LectureManager:DomainService
@@ -30,8 +31,10 @@ namespace Dev.Acadmy.Lectures
         private readonly IRepository<LectureTry , Guid> _lectureTryRepository;
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
         private readonly IRepository<Question, Guid> _questionRepository;
-        public LectureManager(IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        public LectureManager(IMediaItemRepository mediaItemRepository, IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
         {
+            _mediaItemRepository = mediaItemRepository;
             _questionRepository = questionRepository;
             _quizStudentRepository = quizStudentRepository;
             _lectureTryRepository = lectureTryRepository;
@@ -59,66 +62,68 @@ namespace Dev.Acadmy.Lectures
             return new ResponseApi<LectureDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
-        public async Task<PagedResultDto<LectureDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<PagedResultDto<LectureDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid chapterId)
         {
-            var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
+            var currentUserId = _currentUser.GetId();
+            var roles = await _userRepository.GetRolesAsync(currentUserId);
+            var isAdmin = roles.Any(x => x.Name.Equals(RoleConsts.Admin, StringComparison.OrdinalIgnoreCase));
+
             var queryable = await _lectureRepository.GetQueryableAsync();
-            // لو فى بحث
+
+            // 1. الفلترة الأساسية (حسب الفصل والصلاحيات)
+            queryable = queryable.Where(x => x.ChapterId == chapterId);
+
+            if (!isAdmin)
+            {
+                queryable = queryable.Where(c => c.CreatorId == currentUserId);
+            }
+
+            // 2. البحث في المحتوى (Content) فقط
             if (!string.IsNullOrWhiteSpace(search))
             {
-                queryable = queryable
-                    .Include(x => x.Chapter).ThenInclude(x=>x.Course)
-                    .Include(x => x.Quizzes)
-                    .Where(c => c.Content.ToUpper().Contains(search.ToUpper()) || c.Chapter.Name.ToUpper().Contains(search.ToUpper()) || c.Chapter.Course.Name.ToUpper().Contains(search.ToUpper()));
-            }
-            else
-            {
-                queryable = queryable
-                    .Include(x => x.Chapter).ThenInclude(x => x.Course)
-                    .Include(x => x.Quizzes);
+                var searchLower = search.ToLower();
+                queryable = queryable.Where(c => c.Content.ToLower().Contains(searchLower));
             }
 
-            // فلترة حسب الدور
-            if (!roles.Any(x => x.Name.ToUpper() == RoleConsts.Admin.ToUpper()))
-            {
-                queryable = queryable.Where(c => c.CreatorId == _currentUser.GetId());
-            }
+            // 3. تحميل العلاقات المطلوبة للـ DTO
+            queryable = queryable.Include(x => x.Chapter).ThenInclude(x => x.Course)
+                                 .Include(x => x.Quizzes);
 
-            // totalCount بعد الفلترة
             var totalCount = await AsyncExecuter.CountAsync(queryable);
 
-            // البيانات مع التصفح
+            // 4. جلب البيانات الأساسية (Pagination)
             var lectures = await AsyncExecuter.ToListAsync(
-                queryable
-                    .OrderBy(c => c.CreationTime)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
+                queryable.OrderByDescending(c => c.CreationTime)
+                         .Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize)
             );
 
-            var lectureDtos = new List<LectureDto>();
+            // --- حل مشكلة الـ N+1 لجلب الـ PDFs في استعلام واحد (Batch Loading) ---
+            var lectureIds = lectures.Select(x => x.Id).ToList();
+            var allMediaItems = await _mediaItemRepository.GetListAsync(x => lectureIds.Contains(x.RefId));
+            var mediaLookup = allMediaItems.ToLookup(x => x.RefId);
 
-            foreach (var l in lectures)
+            // 5. التحويل إلى DTO
+            var lectureDtos = lectures.Select(l => new LectureDto
             {
-                var dto = new LectureDto
-                {
-                    Id = l.Id,
-                    ChapterId = l.ChapterId,
-                    ChapterName = l.Chapter.Name,
-                    Content = l.Content,
-                    Title = l.Title,
-                    VideoUrl = l.VideoUrl,
-                    CourseId = l.Chapter.CourseId,
-                    CourseName = l.Chapter.Course.Name,
-                    IsVisible = l.IsVisible,
-                    QuizCount = l.Quizzes.Count(),
-                    QuizTime = l?.Quizzes?.FirstOrDefault()?.QuizTime ?? 0,
-                    QuizTryCount = (l?.QuizTryCount*l?.Quizzes?.Count())?? 0
-                };
-
-                var lecPdfs = await _mediaItemManager.GetListAsync(l.Id);
-                foreach (var pdf in lecPdfs) if (!pdf.IsImage) dto.PdfUrls.Add(pdf.Url);
-                lectureDtos.Add(dto);
-            }
+                Id = l.Id,
+                ChapterId = l.ChapterId,
+                ChapterName = l.Chapter?.Name,
+                Content = l.Content,
+                Title = l.Title,
+                VideoUrl = l.VideoUrl,
+                CourseId = l.Chapter?.CourseId ?? Guid.Empty,
+                CourseName = l.Chapter?.Course?.Name,
+                IsVisible = l.IsVisible,
+                QuizCount = l.Quizzes.Count,
+                QuizTime = l.Quizzes.FirstOrDefault()?.QuizTime ?? 0,
+                QuizTryCount = (l.QuizTryCount * l.Quizzes.Count),
+                // جلب الروابط من الـ Lookup الموجود في الذاكرة
+                PdfUrls = mediaLookup[l.Id]
+                            .Where(m => !m.IsImage)
+                            .Select(m => m.Url)
+                            .ToList()
+            }).ToList();
 
             return new PagedResultDto<LectureDto>(totalCount, lectureDtos);
         }
