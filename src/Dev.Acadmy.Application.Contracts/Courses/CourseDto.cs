@@ -37,7 +37,8 @@ namespace Dev.Acadmy.Courses
         public string CollegeName { get; set; }
         public string UnvirsityName {  get; set; }
         public string UserName { get; set; }
-
+        // هل يتم عرض عدد المشتركين للمستخدمين؟
+        public bool ShowSubscriberCount { get; set; } = true;
         public int ChapterCount { get; set; }
         public int LectureCount { get; set; }
         public int SubscriberCount { get; set; }

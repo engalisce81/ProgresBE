@@ -14,6 +14,8 @@ namespace Dev.Acadmy.Courses
         public int? DurationInDays { get; set; } // null if lifetime
         public bool IsPdf { get; set; }
         public string PdfUrl { get; set; }
+        // هل يتم عرض عدد المشتركين للمستخدمين؟
+        public bool ShowSubscriberCount { get; set; } 
         public string IntroductionVideoUrl { get; set; }
         public Guid? SubjectId { get; set; }
         public bool IsQuiz { get; set; }

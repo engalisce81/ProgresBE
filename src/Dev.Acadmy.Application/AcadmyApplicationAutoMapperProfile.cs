@@ -80,7 +80,9 @@ public class AcadmyApplicationAutoMapperProfile : Profile
         CreateMap<CreateUpdateQuestionAnswerDto, Questions.QuestionAnswer>();
 
         // QuestionBank
-        CreateMap<QuestionBank, QuestionBankDto>();
+        CreateMap<QuestionBank, QuestionBankDto>()
+             .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
         CreateMap<CreateUpdateQuestionBankDto, QuestionBank>();
 
         // QuestionType

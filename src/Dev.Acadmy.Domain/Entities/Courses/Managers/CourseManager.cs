@@ -238,6 +238,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 GradelevelName = course.Subject?.GradeLevel?.Name ?? string.Empty,
                 IntroductionVideoUrl = course.IntroductionVideoUrl,
                 IsQuiz = course.IsQuiz,
+                ShowSubscriberCount = course.ShowSubscriberCount,
             }).ToList();
 
             return new PagedResultDto<CourseInfoHomeDto>(totalCount, courseDtos);
@@ -305,7 +306,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 CollegeName = course.College?.Name ?? "",
                 SubjectId = course.Subject?.Id,
                 SubjectName = course.Subject?.Name ?? "",
-
+                ShowSubscriberCount = course.ShowSubscriberCount,
                 // التقييمات وحالة المستخدم
                 Rating = (float)Math.Round(averageRating, 1),
                 Feedbacks = feedbacks, // القائمة التي جلبناها مع صورها
@@ -501,7 +502,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             };
             var resultCourse = await _courseRepository.InsertAsync(newCourse, autoSave: true);
             await _mediaItemManager.CreateAsync(new CreateUpdateMediaItemDto { Url =  _mediaItemManager.GetAsync(course.Id).Result?.Url ?? "", RefId = resultCourse.Id, IsImage = true });
-            var bankStatic = await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { Name = resultCourse.Name + "Question Bank", CourseId = resultCourse.Id });
+            //var bankStatic = await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { Name = resultCourse.Name + "Question Bank", CourseId = resultCourse.Id });
 
             // await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { CreatorId = newCourse.UserId, CourseId = newCourse.Id, Name = $"{newCourse.Name} Question Bank (Copy)" });
             // انسخ CourseInfos
@@ -562,7 +563,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                                 Title = question.Title,
                                 QuizId = quizDto.Data.Id,
                                 QuestionTypeId = question.QuestionTypeId,
-                                QuestionBankId = bankStatic.Data.Id,
+                                QuestionBankId =null,
                                 Answers = question.QuestionAnswers.Select(a => new CreateUpdateQuestionAnswerDto
                                 {
                                     Answer = a.Answer,

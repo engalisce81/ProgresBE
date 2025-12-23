@@ -21,7 +21,6 @@ namespace Dev.Acadmy.Configuration
             builder.HasOne(x => x.College).WithMany().HasForeignKey(x => x.CollegeId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             builder.HasMany(x=>x.Quizzes).WithOne(x=>x.Course).HasForeignKey(x=>x.CourseId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
-            builder.HasMany(x => x.QuestionBanks).WithOne(x => x.Course).HasForeignKey(q => q.CourseId).OnDelete(DeleteBehavior.Cascade);
         }
 
     }

@@ -66,7 +66,6 @@ namespace Dev.Acadmy.Repositories
             // 2. جلب البيانات مع الـ Includes والـ Pagination
             var items = await query.Include(x => x.College)
                                    .Include(x => x.Exams)
-                                   .Include(x => x.QuestionBanks)
                                    .Include(x => x.User)
                                    .Include(x=>x.Chapters).ThenInclude(x=>x.Lectures)
                                    .Include(x => x.Subject).ThenInclude(x=>x.GradeLevel)

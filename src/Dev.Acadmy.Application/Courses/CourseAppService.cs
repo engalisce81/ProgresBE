@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Entities.Courses.Managers;
 using Dev.Acadmy.Enums;
 using Dev.Acadmy.Interfaces;
@@ -9,7 +8,6 @@ using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +15,7 @@ using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Data;
-using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
-using Volo.Abp.ObjectMapping;
 using Volo.Abp.Uow;
 using Volo.Abp.Users;
 

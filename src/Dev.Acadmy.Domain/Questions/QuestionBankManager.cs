@@ -32,7 +32,7 @@ namespace Dev.Acadmy.Questions
             _mapper = mapper;
         }
 
-        public async Task<QuestionBank?> GetByQuestionBank(Guid courseId) => await _questionbankRepository.FirstOrDefaultAsync(x => x.CourseId == courseId);
+        public async Task<QuestionBank?> GetByQuestionBank(Guid courseId) => await _questionbankRepository.FirstOrDefaultAsync(x => x.UserId == courseId);
         public async Task<ResponseApi<QuestionBankDto>> GetAsync(Guid id)
         {
             var questionbank = await _questionbankRepository.FirstOrDefaultAsync(x => x.Id == id);
@@ -45,11 +45,11 @@ namespace Dev.Acadmy.Questions
         {
             var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
             var queryable = await _questionbankRepository.GetQueryableAsync();
-            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x => x.Course).Where(c => c.Name.Contains(search) ||  c.Course.Name.Contains(search));
+            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x => x.User).Where(c => c.Name.Contains(search) ||  c.User.Name.Contains(search));
             var questionbanks = new List<QuestionBank>();
             var totalCount = await AsyncExecuter.CountAsync(queryable);
-            if (roles.Any(x => x.Name.ToUpper() == RoleConsts.Admin.ToUpper())) questionbanks = await AsyncExecuter.ToListAsync(queryable.Include(x => x.Course).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            else questionbanks = await AsyncExecuter.ToListAsync(queryable.Where(c => c.CreatorId == _currentUser.GetId()).Include(x => x.Course).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
+            if (roles.Any(x => x.Name.ToUpper() == RoleConsts.Admin.ToUpper())) questionbanks = await AsyncExecuter.ToListAsync(queryable.Include(x => x.User   ).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
+            else questionbanks = await AsyncExecuter.ToListAsync(queryable.Where(c => c.CreatorId == _currentUser.GetId()).Include(x => x.User).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
             var questionbankDtos = _mapper.Map<List<QuestionBankDto>>(questionbanks);
             return new PagedResultDto<QuestionBankDto>(totalCount, questionbankDtos);
         }
@@ -57,6 +57,7 @@ namespace Dev.Acadmy.Questions
         public async Task<ResponseApi<QuestionBankDto>> CreateAsync(CreateUpdateQuestionBankDto input)
         {
             var questionbank = _mapper.Map<QuestionBank>(input);
+            questionbank.UserId = _currentUser.GetId();
             var result = await _questionbankRepository.InsertAsync(questionbank,autoSave:true);
             var dto = _mapper.Map<QuestionBankDto>(result);
             return new ResponseApi<QuestionBankDto> { Data = dto, Success = true, Message = "save succeess" };
@@ -67,6 +68,7 @@ namespace Dev.Acadmy.Questions
             var questionbankDB = await _questionbankRepository.FirstOrDefaultAsync(x => x.Id == id);
             if (questionbankDB == null) return new ResponseApi<QuestionBankDto> { Data = null, Success = false, Message = "Not found questionbank" };
             var questionbank = _mapper.Map(input, questionbankDB);
+            questionbank.UserId = _currentUser.GetId();
             var result = await _questionbankRepository.UpdateAsync(questionbank);
             var dto = _mapper.Map<QuestionBankDto>(result);
             return new ResponseApi<QuestionBankDto> { Data = dto, Success = true, Message = "update succeess" };

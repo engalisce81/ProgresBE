@@ -9,6 +9,5 @@ namespace Dev.Acadmy.Questions
     public class CreateUpdateQuestionBankDto
     {
         public string Name { get; set; }
-        public Guid CourseId { get; set; }
     }
 }

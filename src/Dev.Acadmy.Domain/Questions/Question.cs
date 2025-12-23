@@ -1,5 +1,4 @@
-﻿using Dev.Acadmy.Exams;
-using Dev.Acadmy.Quizzes;
+﻿using Dev.Acadmy.Quizzes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -12,14 +11,14 @@ namespace Dev.Acadmy.Questions
         public string Title { get; set; }
         public Guid QuestionTypeId { get; set; }
         public Guid QuizId { get; set; }
-        public Guid QuestionBankId { get; set; }
+        public Guid? QuestionBankId { get; set; }
         public int Score { get; set; }
         [ForeignKey(nameof(QuizId))]
         public Quiz Quiz { get; set;}
         [ForeignKey(nameof(QuestionTypeId))]
         public QuestionType QuestionType { get; set; }
         [ForeignKey(nameof(QuestionBankId))]
-        public QuestionBank QuestionBank { get; set; }
+        public QuestionBank? QuestionBank { get; set; }
         public ICollection<QuestionAnswer> QuestionAnswers { get; set; }=new List<QuestionAnswer>();
     }
 }
