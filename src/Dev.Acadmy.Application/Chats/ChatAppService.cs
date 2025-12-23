@@ -84,10 +84,10 @@ namespace Dev.Acadmy.Chats
         /// </summary>
         [Authorize]
         public async Task<PagedResultDto<ChatMessageDto>> GetMessagesAsync(
-    Guid receverId,
-    int pageNumber = 1,
-    int pageSize = 10,
-    string search = null)
+            Guid receverId,
+            int pageNumber = 1,
+            int pageSize = 10,
+            string search = null)
         {
             var skipCount = (pageNumber - 1) * pageSize;
             var query = await _chatRepo.GetQueryableAsync();
