@@ -54,12 +54,12 @@ namespace Dev.Acadmy.Universites
             return new ResponseApi<SubjectDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
-        public async Task<PagedResultDto<SubjectDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<PagedResultDto<SubjectDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid gradeLevelId)
         {
             var queryable = await _subjectRepository.GetQueryableAsync();
-            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x => x.GradeLevel).ThenInclude(x => x.College).ThenInclude(x => x.University).Include(x => x.Term).Where(c => c.Name.Contains(search));
+            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x => x.GradeLevel).ThenInclude(x => x.College).ThenInclude(x => x.University).Include(x => x.Term).Where(x=>x.GradeLevelId == gradeLevelId).Where(c => c.Name.Contains(search));
             var totalCount = await AsyncExecuter.CountAsync(queryable);
-            var subjects = await AsyncExecuter.ToListAsync(queryable.Include(x => x.GradeLevel).ThenInclude(x => x.College).ThenInclude(x => x.University).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
+            var subjects = await AsyncExecuter.ToListAsync(queryable.Include(x => x.GradeLevel).ThenInclude(x => x.College).ThenInclude(x => x.University).Include(x => x.Term).Where(x=>x.GradeLevelId == gradeLevelId).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
             var subjectDtos = new List<SubjectDto>();
             foreach(var subject in subjects)
             {

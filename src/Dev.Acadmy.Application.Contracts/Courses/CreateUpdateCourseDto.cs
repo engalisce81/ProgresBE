@@ -16,6 +16,7 @@ namespace Dev.Acadmy.Courses
         public string PdfUrl { get; set; }
         public string IntroductionVideoUrl { get; set; }
         public Guid? SubjectId { get; set; }
+        public bool IsQuiz { get; set; }
         public ICollection<string> Infos { get; set; }= new List<string>();
     }
 }

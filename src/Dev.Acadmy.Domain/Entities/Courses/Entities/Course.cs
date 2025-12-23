@@ -2,6 +2,7 @@
 using Dev.Acadmy.Courses;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Questions;
+using Dev.Acadmy.Quizzes;
 using Dev.Acadmy.Universites;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace Dev.Acadmy.Entities.Courses.Entities
 
         // Visibility
         public bool IsActive { get; set; } = true; // enabled/disabled
+        public bool IsQuiz { get;set; } = false;
 
         // Purchase & duration
         public bool IsLifetime { get; set; } = false;
@@ -42,5 +44,6 @@ namespace Dev.Acadmy.Entities.Courses.Entities
         public ICollection<Chapter>  Chapters { get; set; } = new List<Chapter>();
         public ICollection<CourseInfo> CourseInfos { get; set; } = new List<CourseInfo>();
         public ICollection<CourseFeedback> Feedbacks { get; set; } = new List<CourseFeedback>();
+        public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
     }
 }

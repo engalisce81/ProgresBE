@@ -1,4 +1,5 @@
 ﻿using Dev.Acadmy.EntityFrameworkCore;
+using Dev.Acadmy.Enums;
 using Dev.Acadmy.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -32,6 +33,46 @@ namespace Dev.Acadmy.Repositories
                     .ThenInclude(ch => ch.Lectures) 
                 .Include(c => c.Feedbacks)
                 .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<(List<Entities.Courses.Entities.Course> Items, long TotalCount)> GetListWithDetailsAsync(
+    int skipCount,
+    int maxResultCount,
+    string? search,
+    CourseType type,
+    Guid? userId = null,
+    bool isAdmin = false)
+        {
+            var query = await GetQueryableAsync();
+
+            // تطبيق الفلاتر (نفس المنطق السابق)
+            query = query.WhereIf(!string.IsNullOrWhiteSpace(search), x => x.Name.Contains(search));
+
+            query = type switch
+            {
+                CourseType.Quiz => query.Where(x => x.IsQuiz),
+                CourseType.Pdf => query.Where(x => x.IsPdf),
+                _ => query
+            };
+
+            if (!isAdmin && userId.HasValue)
+            {
+                query = query.Where(x => x.UserId == userId.Value);
+            }
+
+            // 1. حساب الإجمالي قبل عمل Skip و Take
+            var totalCount = await query.LongCountAsync();
+
+            // 2. جلب البيانات مع الـ Includes والـ Pagination
+            var items = await query.Include(x => x.College)
+                                   .Include(x => x.Exams)
+                                   .Include(x => x.QuestionBanks)
+                                   .WhereIf(!isAdmin, x => true) // كود توضيحي لو أردت إضافة شروط إضافية
+                                   .OrderByDescending(x => x.CreationTime)
+                                   .PageBy(skipCount, maxResultCount)
+                                   .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }

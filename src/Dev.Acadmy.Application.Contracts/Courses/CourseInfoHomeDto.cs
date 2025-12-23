@@ -10,6 +10,7 @@ namespace Dev.Acadmy.Courses
         public Guid Id { get; set; }
         public bool IsPdf { get; set; }
         public string PdfUrl { get; set; }
+        public bool IsQuiz { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
