@@ -9,31 +9,20 @@ namespace Dev.Acadmy.Configuration
     {
         public void Configure(EntityTypeBuilder<Entities.Courses.Entities.Course> builder)
         {
-            builder.ToTable(AcadmyConsts.DbTablePrefix +"Courses" + AcadmyConsts.DbSchema);
+            builder.ToTable(AcadmyConsts.DbTablePrefix + "Courses" + AcadmyConsts.DbSchema);
 
-            builder.Property(x => x.Title)
-                   .IsRequired()
-                   .HasMaxLength(200);
+            // Indexes
+            builder.HasIndex(x => x.Name); // لتسريع البحث بالاسم
+            builder.HasIndex(x => new { x.IsQuiz, x.IsPdf }); // Index مركب لتسريع فلترة الأنواع
+            builder.HasIndex(x => x.CreationTime); // لتسريع الترتيب OrderByDescending
 
-            builder.Property(x => x.Description)
-                   .HasMaxLength(2000);
-
-            builder.HasOne(x => x.College)
-                   .WithMany()
-                   .HasForeignKey(x => x.CollegeId)
-                   .OnDelete(DeleteBehavior.Restrict);
-
-            builder.HasOne(x => x.User)
-                   .WithMany()
-                   .HasForeignKey(x => x.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasMany(x => x.QuestionBanks)
-                   .WithOne(x=>x.Course)
-                   .HasForeignKey(q => q.CourseId)
-                   .OnDelete(DeleteBehavior.Cascade);
+            builder.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            builder.Property(x => x.Description).HasMaxLength(2000);
+            builder.HasOne(x => x.College).WithMany().HasForeignKey(x => x.CollegeId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasMany(x=>x.Quizzes).WithOne(x=>x.Course).HasForeignKey(x=>x.CourseId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
         }
-    
+
     }
 
     public class CourseStudentsConfiguration : IEntityTypeConfiguration<CourseStudent>

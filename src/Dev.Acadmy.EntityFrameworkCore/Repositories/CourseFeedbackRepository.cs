@@ -13,9 +13,9 @@ using Volo.Abp.EntityFrameworkCore;
 
 namespace Dev.Acadmy.Repositories
 {
-    public class CoreCourseFeedbackRepository : EfCoreRepository<AcadmyDbContext, CourseFeedback, Guid>, ICourseFeedbackRepository
+    public class CourseFeedbackRepository : EfCoreRepository<AcadmyDbContext, CourseFeedback, Guid>, ICourseFeedbackRepository
     {
-        public CoreCourseFeedbackRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
+        public CourseFeedbackRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider) { }
 
         public async Task<List<FeedbackDto>> GetListFeedbacksByCourseIdAsync(

@@ -65,10 +65,11 @@ namespace Dev.Acadmy.Configuration
         {
             builder.ToTable(AcadmyConsts.DbTablePrefix + "QuestionBanks" + AcadmyConsts.DbTablePrefix);
 
-            builder.HasOne(qb => qb.Course)
-                   .WithMany(c => c.QuestionBanks)
-                   .HasForeignKey(qb => qb.CourseId)
+            builder.HasOne(qb => qb.User)
+                   .WithMany()
+                   .HasForeignKey(qb => qb.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(qb => qb.UserId);
         }
     }
     public class QuestionTypeConfiguration : IEntityTypeConfiguration<QuestionType>

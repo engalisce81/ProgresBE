@@ -181,9 +181,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         }
         
 
-        public async Task<ResponseApi<bool>> DeleteAsync(Guid id)
+        public async Task<ResponseApi<bool>> DeleteAsync(Guid userId)
         {
-            var coursestudent = await _coursestudentRepository.FirstOrDefaultAsync(x => x.Id == id);
+            var coursestudent = await _coursestudentRepository.FirstOrDefaultAsync(x => x.UserId == userId);
             if (coursestudent == null) return new ResponseApi<bool> { Data = false, Success = false, Message = "Not found coursestudent" };
             await _coursestudentRepository.DeleteAsync(coursestudent);
             return new ResponseApi<bool> { Data = true, Success = true, Message = "delete succeess" };

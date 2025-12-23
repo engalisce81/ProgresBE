@@ -3,6 +3,7 @@ using System;
 using Dev.Acadmy.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Dev.Acadmy.Migrations
 {
     [DbContext(typeof(AcadmyDbContext))]
-    partial class AcadmyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251223161857_BankUserMigration")]
+    partial class BankUserMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,9 +393,6 @@ namespace Dev.Acadmy.Migrations
 
                     b.Property<float>("Rating")
                         .HasColumnType("real");
-
-                    b.Property<bool>("ShowSubscriberCount")
-                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("SubjectId")
                         .HasColumnType("uuid");
@@ -942,7 +942,7 @@ namespace Dev.Acadmy.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
-                    b.Property<Guid?>("QuestionBankId")
+                    b.Property<Guid>("QuestionBankId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("QuestionTypeId")
@@ -3534,7 +3534,8 @@ namespace Dev.Acadmy.Migrations
                     b.HasOne("Dev.Acadmy.Questions.QuestionBank", "QuestionBank")
                         .WithMany("Questions")
                         .HasForeignKey("QuestionBankId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Dev.Acadmy.Questions.QuestionType", "QuestionType")
                         .WithMany("Questions")

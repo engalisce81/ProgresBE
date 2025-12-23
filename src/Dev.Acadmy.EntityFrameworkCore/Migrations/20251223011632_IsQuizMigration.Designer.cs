@@ -3,6 +3,7 @@ using System;
 using Dev.Acadmy.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Dev.Acadmy.Migrations
 {
     [DbContext(typeof(AcadmyDbContext))]
-    partial class AcadmyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251223011632_IsQuizMigration")]
+    partial class IsQuizMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,9 +393,6 @@ namespace Dev.Acadmy.Migrations
 
                     b.Property<float>("Rating")
                         .HasColumnType("real");
-
-                    b.Property<bool>("ShowSubscriberCount")
-                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("SubjectId")
                         .HasColumnType("uuid");
@@ -942,7 +942,7 @@ namespace Dev.Acadmy.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
-                    b.Property<Guid?>("QuestionBankId")
+                    b.Property<Guid>("QuestionBankId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("QuestionTypeId")
@@ -1035,6 +1035,9 @@ namespace Dev.Acadmy.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("ConcurrencyStamp");
 
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("CreationTime");
@@ -1060,12 +1063,9 @@ namespace Dev.Acadmy.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CourseId");
 
                     b.ToTable("AppQuestionBanksApp", (string)null);
                 });
@@ -3534,7 +3534,8 @@ namespace Dev.Acadmy.Migrations
                     b.HasOne("Dev.Acadmy.Questions.QuestionBank", "QuestionBank")
                         .WithMany("Questions")
                         .HasForeignKey("QuestionBankId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Dev.Acadmy.Questions.QuestionType", "QuestionType")
                         .WithMany("Questions")
@@ -3568,12 +3569,13 @@ namespace Dev.Acadmy.Migrations
 
             modelBuilder.Entity("Dev.Acadmy.Questions.QuestionBank", b =>
                 {
-                    b.HasOne("Volo.Abp.Identity.IdentityUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasOne("Dev.Acadmy.Entities.Courses.Entities.Course", "Course")
+                        .WithMany("QuestionBanks")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Course");
                 });
 
             modelBuilder.Entity("Dev.Acadmy.Quizzes.Quiz", b =>
@@ -3826,6 +3828,8 @@ namespace Dev.Acadmy.Migrations
                     b.Navigation("Exams");
 
                     b.Navigation("Feedbacks");
+
+                    b.Navigation("QuestionBanks");
 
                     b.Navigation("Quizzes");
                 });

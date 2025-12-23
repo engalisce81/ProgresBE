@@ -10,6 +10,7 @@ namespace Dev.Acadmy.Courses
         public Guid Id { get; set; }
         public bool IsPdf { get; set; }
         public string PdfUrl { get; set; }
+        public bool IsQuiz { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
@@ -21,6 +22,8 @@ namespace Dev.Acadmy.Courses
         public Guid? CollegeId { get; set; }
         public string CollegeName { get; set; }
         public Guid? SubjectId { get; set; }
+        // هل يتم عرض عدد المشتركين للمستخدمين؟
+        public bool ShowSubscriberCount { get; set; } 
         public string? SubjectName { get; set; }
         public Guid? GradelevelId { get; set; }
         public string? GradelevelName { get; set; }

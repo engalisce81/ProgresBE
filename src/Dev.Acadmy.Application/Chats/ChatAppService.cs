@@ -23,21 +23,19 @@ namespace Dev.Acadmy.Chats
         private readonly IRepository<ChatMessage, Guid> _chatRepo;
         private readonly IMediaItemRepository _mediaItemRepository;
         private readonly ILocalEventBus _localEventBus;
-        private readonly IHubContext<ChatHub> _hubContext;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        //private readonly IHubContext<ChatHub> _hubContext;
+        //private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ChatAppService(
             IRepository<ChatMessage, Guid> chatRepo,
             IMediaItemRepository mediaItemRepository,
-            ILocalEventBus localEventBus,
-            IHubContext<ChatHub> hubContext,
-            IHttpContextAccessor httpContextAccessor)
+            ILocalEventBus localEventBus)
         {
             _chatRepo = chatRepo;
             _mediaItemRepository = mediaItemRepository;
             _localEventBus = localEventBus;
-            _hubContext = hubContext;
-            _httpContextAccessor = httpContextAccessor;
+            //_hubContext = hubContext;
+            //_httpContextAccessor = httpContextAccessor;
         }
 
         [Authorize]
@@ -72,13 +70,13 @@ namespace Dev.Acadmy.Chats
 
             var messageList = new List<ChatMessageDto> { messageDto };
 
-            // 4. الحل الحقيقي للـ Real-Time: إرسال عبر SignalR
-            // نرسلها لغرفة الـ Recever (سواء كان شخص أو كورس)
-            await _hubContext.Clients.Group(input.ReceverId.ToString())
-                .SendAsync("ReceiveMessage", messageList);
+            //// 4. الحل الحقيقي للـ Real-Time: إرسال عبر SignalR
+            //// نرسلها لغرفة الـ Recever (سواء كان شخص أو كورس)
+            //await _hubContext.Clients.Group(input.ReceverId.ToString())
+            //    .SendAsync("ReceiveMessage", messageList);
 
-            // 5. (اختياري) استمر في استخدام الـ EventBus إذا كان لديك Handlers أخرى في السيرفر
-            await _localEventBus.PublishAsync(messageDto);
+            //// 5. (اختياري) استمر في استخدام الـ EventBus إذا كان لديك Handlers أخرى في السيرفر
+            //await _localEventBus.PublishAsync(messageDto);
         }
 
         /// <summary>
@@ -86,10 +84,10 @@ namespace Dev.Acadmy.Chats
         /// </summary>
         [Authorize]
         public async Task<PagedResultDto<ChatMessageDto>> GetMessagesAsync(
-    Guid receverId,
-    int pageNumber = 1,
-    int pageSize = 10,
-    string search = null)
+            Guid receverId,
+            int pageNumber = 1,
+            int pageSize = 10,
+            string search = null)
         {
             var skipCount = (pageNumber - 1) * pageSize;
             var query = await _chatRepo.GetQueryableAsync();

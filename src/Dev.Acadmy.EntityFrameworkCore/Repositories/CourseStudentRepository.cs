@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
@@ -38,6 +37,21 @@ namespace Dev.Acadmy.Repositories
                 .Include(x => x.Course)
                 .Where(x => x.UserId == userId && !x.IsSubscibe)
                 .ToListAsync();
+        }
+
+        public async Task<Dictionary<Guid, int>> GetTotalSubscribersPerCourseAsync(IEnumerable<Guid> courseIds)
+        {
+            var dbContext = await GetDbContextAsync();
+
+            return await dbContext.Set<CourseStudent>()
+                .Where(cs => courseIds.Contains(cs.CourseId)) // فلترة حسب الكورسات المطلوبة فقط
+                .GroupBy(cs => cs.CourseId)
+                .Select(group => new
+                {
+                    CourseId = group.Key,
+                    Count = group.Count()
+                })
+                .ToDictionaryAsync(x => x.CourseId, x => x.Count);
         }
     }
 }

@@ -41,12 +41,12 @@ namespace Dev.Acadmy.Universites
             return new ResponseApi<CollegeDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
-        public async Task<PagedResultDto<CollegeDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<PagedResultDto<CollegeDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid universityId)
         {
             var queryable = (await _collegeRepository.GetQueryableAsync());
             if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x => x.University).Where(c => c.Name.Contains(search));  
             var totalCount = await AsyncExecuter.CountAsync(queryable);
-            var colleges = await AsyncExecuter.ToListAsync(queryable.Include(x => x.University).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize) .Take(pageSize) );
+            var colleges = await AsyncExecuter.ToListAsync(queryable.Include(x => x.University).OrderByDescending(c => c.CreationTime).Where(x=>x.UniversityId == universityId).Skip((pageNumber - 1) * pageSize) .Take(pageSize) );
             var collegeDtos = _mapper.Map<List<CollegeDto>>(colleges);
             return new PagedResultDto<CollegeDto>(totalCount, collegeDtos);
         }

@@ -19,7 +19,7 @@ namespace Dev.Acadmy.Universites
         [Authorize(AcadmyPermissions.Subjects.View)]
         public async Task<ResponseApi<SubjectDto>> GetAsync(Guid id) => await _subjectManager.GetAsync(id);
         [Authorize(AcadmyPermissions.Subjects.View)]
-        public async Task<PagedResultDto<SubjectDto>> GetListAsync(int pageNumber, int pageSize, string? search) => await _subjectManager.GetListAsync(pageNumber, pageSize, search);
+        public async Task<PagedResultDto<SubjectDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid gradeLevelId) => await _subjectManager.GetListAsync(pageNumber, pageSize, search,gradeLevelId);
         [Authorize(AcadmyPermissions.Subjects.Create)]
         public async Task<ResponseApi<SubjectDto>> CreateAsync(CreateUpdateSubjectDto input) => await _subjectManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Subjects.Edit)]

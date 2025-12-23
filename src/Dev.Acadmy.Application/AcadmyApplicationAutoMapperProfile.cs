@@ -18,6 +18,7 @@ using Dev.Acadmy.Questions;
 using Dev.Acadmy.Quizzes;
 using Dev.Acadmy.Supports;
 using Dev.Acadmy.Universites;
+using System.Linq;
 
 namespace Dev.Acadmy;
 
@@ -28,10 +29,30 @@ public class AcadmyApplicationAutoMapperProfile : Profile
         CreateMap<College, CollegeDto>();
         CreateMap<CreateUpdateCollegeDto, College>();
 
-        // Course
-        CreateMap<Entities.Courses.Entities.Course, CourseDto>();
-        CreateMap<CreateUpdateCourseDto, Entities.Courses.Entities.Course>();
+        
 
+        CreateMap<Entities.Courses.Entities.Course, CourseDto>()
+         // حساب عدد الفصول - التأكد من أن القائمة ليست null
+         .ForMember(dest => dest.ChapterCount,
+                    opt => opt.MapFrom(src => src.Chapters != null ? src.Chapters.Count : 0))
+         // حساب عدد المحاضرات - استخدام Sum بحذر مع null check
+         .ForMember(dest => dest.LectureCount,
+                    opt => opt.MapFrom(src => src.Chapters != null
+                        ? src.Chapters.Sum(c => c.Lectures != null ? c.Lectures.Count : 0)
+                        : 0))
+         // اسم المستخدم - استخدام الـ null propagation
+         .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty))
+         // اسم المادة
+         .ForMember(dest => dest.SubjectName,
+                    opt => opt.MapFrom(src => src.Subject != null ? src.Subject.Name : string.Empty))
+         // اسم السنة الدراسية (GradeLevel) - الوصول لعمق مستويين بشكل آمن
+         .ForMember(dest => dest.GradeLevelName,
+                    opt => opt.MapFrom(src => (src.Subject != null && src.Subject.GradeLevel != null)
+                        ? src.Subject.GradeLevel.Name
+                        : string.Empty));
+        // Course
+        CreateMap<CreateUpdateCourseDto, Entities.Courses.Entities.Course>();
         // Chapter
         CreateMap<Chapter, ChapterDto>();
         CreateMap<CreateUpdateChapterDto, Chapter>();
@@ -59,7 +80,9 @@ public class AcadmyApplicationAutoMapperProfile : Profile
         CreateMap<CreateUpdateQuestionAnswerDto, Questions.QuestionAnswer>();
 
         // QuestionBank
-        CreateMap<QuestionBank, QuestionBankDto>();
+        CreateMap<QuestionBank, QuestionBankDto>()
+             .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
         CreateMap<CreateUpdateQuestionBankDto, QuestionBank>();
 
         // QuestionType

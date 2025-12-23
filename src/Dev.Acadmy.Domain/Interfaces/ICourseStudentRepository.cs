@@ -12,5 +12,6 @@ namespace Dev.Acadmy.Interfaces
     {
         public Task<List<CourseStudent>> GetListJoinedCoursesByUserIdAsync(Guid userId);
         public Task<List<CourseStudent>> GetListPendingRequestsByUserIdAsync(Guid userId);
+        Task<Dictionary<Guid, int>> GetTotalSubscribersPerCourseAsync(IEnumerable<Guid> courseIds);
     }
 }

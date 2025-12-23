@@ -2,6 +2,7 @@
 using Dev.Acadmy.Chapters;
 using Dev.Acadmy.Courses;
 using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Enums;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Lectures;
@@ -49,8 +50,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         private readonly ICourseRepository _courseRepo;
         private readonly ICourseFeedbackRepository _courseFeedbackRepo;
         private readonly IMediaItemRepository _mediaItemRepo;
-        public CourseManager(IMediaItemRepository mediaItemRepo, ICourseFeedbackRepository courseFeedbackRepo,ICourseRepository courseRepo,  IRepository<QuestionBank, Guid> questionBankRepository, IRepository<Exam ,Guid> examRepository, ExamManager examManager, IRepository<Lecture, Guid> lectureRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<Chapter, Guid> chapterRepository,IRepository<QuizStudent, Guid> quizStudentRepository, QuestionManager questionManager, QuizManager quizManger, LectureManager lectureManager, CourseInfoManager courseInfoManager, ChapterManager chapterManager, IRepository<CourseStudent, Guid> courseStudentRepository, QuestionBankManager questionBankManager, IIdentityUserRepository userRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IRepository<Entities.Course> courseRepository , IMapper mapper) 
+        private readonly IQuizRepository _quizRepo;
+        public CourseManager(IQuizRepository quizRepo, IMediaItemRepository mediaItemRepo, ICourseFeedbackRepository courseFeedbackRepo,ICourseRepository courseRepo,  IRepository<QuestionBank, Guid> questionBankRepository, IRepository<Exam ,Guid> examRepository, ExamManager examManager, IRepository<Lecture, Guid> lectureRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<Chapter, Guid> chapterRepository,IRepository<QuizStudent, Guid> quizStudentRepository, QuestionManager questionManager, QuizManager quizManger, LectureManager lectureManager, CourseInfoManager courseInfoManager, ChapterManager chapterManager, IRepository<CourseStudent, Guid> courseStudentRepository, QuestionBankManager questionBankManager, IIdentityUserRepository userRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IRepository<Entities.Course> courseRepository , IMapper mapper) 
         {
+            _quizRepo = quizRepo;
             _mediaItemRepo = mediaItemRepo;
             _courseFeedbackRepo = courseFeedbackRepo;
             _courseRepo = courseRepo;
@@ -87,55 +90,19 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             return new ResponseApi<CourseDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
-        public async Task<PagedResultDto<CourseDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<(List<Entities.Course> Items, long TotalCount)> GetListAsync(int skip, int take, string? search, CourseType type, Guid? userId, bool isAdmin)=> await _courseRepo.GetListWithDetailsAsync(skip, take, search, type, userId, isAdmin);
+        public async Task<Entities.Course> CreateWithDependenciesAsync(Entities.Course course)
         {
-            var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
-            var queryable = await _courseRepository.GetQueryableAsync();
-            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x=>x.College).Where(c => c.Name.Contains(search));
-            var courses = new List<Entities.Course>();
-            var totalCount = await AsyncExecuter.CountAsync(queryable);
-            if (roles.Any(x=>x.Name.ToUpper() ==RoleConsts.Admin.ToUpper() )) courses = await AsyncExecuter.ToListAsync(queryable.Include(x => x.College).Include(x => x.Exams).Include(x => x.QuestionBanks).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            else courses = await AsyncExecuter.ToListAsync(queryable.Where(c => c.UserId == _currentUser.GetId()).Include(x => x.College).Include(x=>x.Exams).Include(x=>x.QuestionBanks).Include(x=>x.Subject).Include(x=>x.CourseInfos).OrderByDescending(c => c.Name).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            var courseDtos = _mapper.Map<List<CourseDto>>(courses);
-            foreach (var courseDto in courseDtos)
-            {
-                var mediaItem = await _mediaItemManager.GetAsync(courseDto.Id);
-                courseDto.LogoUrl = mediaItem?.Url??"";
-            }
-            return new PagedResultDto<CourseDto>(totalCount, courseDtos);
+            var result = await _courseRepository.InsertAsync(course);
+            if (result.IsQuiz) await _quizRepo.InsertAsync(new Quiz { CourseId = result.Id, Title = result.Title, Description = result.Description ,QuizTryCount=0 , QuizTime = 0 });
+            return result;
         }
 
-        public async Task<ResponseApi<CourseDto>> CreateAsync(CreateUpdateCourseDto input)
+        public async Task<Entities.Course> UpdateWithDependenciesAsync(Entities.Course course)
         {
-            var currentUser = await _userRepository.GetAsync(_currentUser.GetId());
-            var course = _mapper.Map<Entities.Course>(input);
-            course.UserId = currentUser.Id;
-            var collegeId = currentUser.GetProperty<Guid>(SetPropConsts.CollegeId);
-            course.CollegeId = collegeId;
-            var result = await _courseRepository.InsertAsync(course);
-            foreach (var info in input.Infos) await _courseInfoManager.CreateAsync(new CreateUpdateCourseInfoDto { Name = info, CourseId = result.Id });
-            await _mediaItemManager.CreateAsync(new CreateUpdateMediaItemDto { Url =input.LogoUrl, RefId = result.Id,IsImage=true});
-         //   await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto {CreatorId =result.UserId, CourseId = result.Id, Name = $"{result.Name} Question Bank" });
-            var dto = _mapper.Map<CourseDto>(result);
-            return new ResponseApi<CourseDto> { Data = dto, Success = true, Message = "save succeess" };
-        }  
-
-        public async Task<ResponseApi<CourseDto>> UpdateAsync(Guid id, CreateUpdateCourseDto input)
-        {
-            var courseDB = await _courseRepository.FirstOrDefaultAsync(x => x.Id == id);
-            if (courseDB == null) return new ResponseApi<CourseDto> { Data = null, Success = false, Message = "Not found Course" };
-            var course = _mapper.Map(input, courseDB);
-            var currentUser = await _userRepository.GetAsync(_currentUser.GetId());
-            var collegeId = currentUser.GetProperty<Guid>(SetPropConsts.CollegeId);
-            course.CollegeId = collegeId;
             var result = await _courseRepository.UpdateAsync(course);
-            await _courseInfoManager.DeleteCourseInfoByCourseId(course.Id);
-            foreach (var info in input.Infos) await _courseInfoManager.CreateAsync(new CreateUpdateCourseInfoDto { Name = info, CourseId = result.Id });
-            await _mediaItemManager.UpdateAsync(id, new CreateUpdateMediaItemDto { Url = input.LogoUrl, RefId = result.Id ,IsImage=true });
-            // var questionBank = await _questionBankManager.GetByCourse(id);
-            //if(questionBank !=null) await _questionBankManager.UpdateAsync(questionBank.Id, new CreateUpdateQuestionBankDto { CreatorId=result.UserId,CourseId = result.Id, Name = $"{result.Name} Question Bank" });
-            var dto = _mapper.Map<CourseDto>(result);
-            return new ResponseApi<CourseDto> { Data = dto, Success = true, Message = "update succeess" };
+            if (result.IsQuiz && !await _quizRepo.AnyAsync(x => x.CourseId == result.Id)) await _quizRepo.InsertAsync(new Quiz { CourseId = result.Id, Title = result.Title, Description = result.Description, QuizTryCount = 0, QuizTime = 0 });
+            return result;
         }
         public async Task<ResponseApi<bool>> DeleteAsync(Guid id)
         {
@@ -249,8 +216,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             var courseDtos = courses.Select(course => new CourseInfoHomeDto
             {
                 Id = course.Id,
-                Name = course.Name,
-                IsPdf = course.IsPdf,
+                Name = course.Name, 
+                IsPdf = course.IsPdf, 
                 PdfUrl = course.PdfUrl,
                 Description = course.Description,
                 Price = course.Price,
@@ -270,6 +237,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 GradelevelId = course.Subject?.GradeLevelId ?? null,
                 GradelevelName = course.Subject?.GradeLevel?.Name ?? string.Empty,
                 IntroductionVideoUrl = course.IntroductionVideoUrl,
+                IsQuiz = course.IsQuiz,
+                ShowSubscriberCount = course.ShowSubscriberCount,
             }).ToList();
 
             return new PagedResultDto<CourseInfoHomeDto>(totalCount, courseDtos);
@@ -325,7 +294,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 UserId = course.UserId,
                 UserName = course.User?.Name ?? "",
                 TeacherLogoUrl = mediaUser?.Url ?? "",
-
+                IsQuiz= course.IsQuiz,
                 IsPdf = course.IsPdf,
                 PdfUrl = course.PdfUrl,
                 LectureCount = totalLectureCount,
@@ -337,7 +306,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 CollegeName = course.College?.Name ?? "",
                 SubjectId = course.Subject?.Id,
                 SubjectName = course.Subject?.Name ?? "",
-
+                ShowSubscriberCount = course.ShowSubscriberCount,
                 // التقييمات وحالة المستخدم
                 Rating = (float)Math.Round(averageRating, 1),
                 Feedbacks = feedbacks, // القائمة التي جلبناها مع صورها
@@ -533,7 +502,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             };
             var resultCourse = await _courseRepository.InsertAsync(newCourse, autoSave: true);
             await _mediaItemManager.CreateAsync(new CreateUpdateMediaItemDto { Url =  _mediaItemManager.GetAsync(course.Id).Result?.Url ?? "", RefId = resultCourse.Id, IsImage = true });
-            var bankStatic = await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { Name = resultCourse.Name + "Question Bank", CourseId = resultCourse.Id });
+            //var bankStatic = await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { Name = resultCourse.Name + "Question Bank", CourseId = resultCourse.Id });
 
             // await _questionBankManager.CreateAsync(new CreateUpdateQuestionBankDto { CreatorId = newCourse.UserId, CourseId = newCourse.Id, Name = $"{newCourse.Name} Question Bank (Copy)" });
             // انسخ CourseInfos
@@ -594,7 +563,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                                 Title = question.Title,
                                 QuizId = quizDto.Data.Id,
                                 QuestionTypeId = question.QuestionTypeId,
-                                QuestionBankId = bankStatic.Data.Id,
+                                QuestionBankId =null,
                                 Answers = question.QuestionAnswers.Select(a => new CreateUpdateQuestionAnswerDto
                                 {
                                     Answer = a.Answer,

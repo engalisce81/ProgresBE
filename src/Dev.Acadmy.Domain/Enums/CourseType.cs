@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dev.Acadmy.Questions
+namespace Dev.Acadmy.Enums
 {
-    public class CreateUpdateQuestionBankDto
-    {
-        public string Name { get; set; }
+    public enum CourseType { 
+        All,
+        Quiz,
+        Pdf 
     }
 }

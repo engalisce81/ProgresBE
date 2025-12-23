@@ -10,7 +10,7 @@ namespace Dev.Acadmy.Questions
     public class QuestionBankDto:EntityDto<Guid>
     {
         public string Name { get; set; }
-        public Guid CourseId { get; set; }
-        public string CourseName { get; set; }
+        public Guid UserId { get; set; }
+        public string UserName { get; set; }
     }
 }

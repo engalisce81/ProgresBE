@@ -20,7 +20,7 @@ namespace Dev.Acadmy.Universites
         [Authorize(AcadmyPermissions.Colleges.View)]
         public async Task<ResponseApi<CollegeDto>> GetAsync(Guid id) => await _collegeManager.GetAsync(id);
         [Authorize(AcadmyPermissions.Colleges.View)]
-        public async Task<PagedResultDto<CollegeDto>> GetListAsync(int pageNumber, int pageSize, string? search) => await _collegeManager.GetListAsync(pageNumber, pageSize, search);
+        public async Task<PagedResultDto<CollegeDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid universityId) => await _collegeManager.GetListAsync(pageNumber, pageSize, search , universityId);
         [Authorize(AcadmyPermissions.Colleges.Create)]
         public async Task<ResponseApi<CollegeDto>> CreateAsync(CreateUpdateCollegeDto input) => await _collegeManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Colleges.Edit)]

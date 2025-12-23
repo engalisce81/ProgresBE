@@ -16,13 +16,10 @@ namespace Dev.Acadmy.Courses
         public string LogoUrl { get; set; }
         public Guid UserId { get; set; }
         public float Rating { get; set; } // average rating
-        public string UserName { get; set; }
         public Guid? CollegeId { get; set; }
-        public string CollegeName { get; set; }
         public Guid? SubjectId { get; set; }
         public Guid? QuestionBankId { get; set; }
         public Guid? ExamId { get; set; }   
-        public string? SubjectName { get; set; } 
 
         // Visibility
         public bool IsActive { get; set; } = true; // enabled/disabled
@@ -33,6 +30,17 @@ namespace Dev.Acadmy.Courses
         public string PdfUrl { get; set; }
         public string IntroductionVideoUrl { get; set; }
         public int? DurationInDays { get; set; } // null if lifetime
+        public bool IsQuiz { get; set; }
         public ICollection<string> Infos { get; set; }= new List<string>();
+        public string GradeLevelName { get; set; }
+        public string SubjectName { get; set; }
+        public string CollegeName { get; set; }
+        public string UnvirsityName {  get; set; }
+        public string UserName { get; set; }
+        // هل يتم عرض عدد المشتركين للمستخدمين؟
+        public bool ShowSubscriberCount { get; set; } = true;
+        public int ChapterCount { get; set; }
+        public int LectureCount { get; set; }
+        public int SubscriberCount { get; set; }
     }
 }
