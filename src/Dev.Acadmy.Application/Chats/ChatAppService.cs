@@ -15,6 +15,7 @@ using Dev.Acadmy.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using Volo.Abp;
 
 namespace Dev.Acadmy.Chats
 {
@@ -39,7 +40,7 @@ namespace Dev.Acadmy.Chats
         }
 
         [Authorize]
-        public async Task SendMessageAsync(CreateUpdateChatMessageDto input)
+        public async Task<ChatMessageDto> SendMessageAsync(CreateUpdateChatMessageDto input)
         {
             var senderId = CurrentUser.GetId();
             var senderName = CurrentUser.Name ?? CurrentUser.UserName;
@@ -69,6 +70,7 @@ namespace Dev.Acadmy.Chats
             };
 
             var messageList = new List<ChatMessageDto> { messageDto };
+            return messageDto;
 
             //// 4. الحل الحقيقي للـ Real-Time: إرسال عبر SignalR
             //// نرسلها لغرفة الـ Recever (سواء كان شخص أو كورس)
@@ -82,6 +84,38 @@ namespace Dev.Acadmy.Chats
         /// <summary>
         /// جلب رسائل محادثة معينة (جروب أو كورس) مع Pagination
         /// </summary>
+        [Authorize]
+        public async Task<ChatMessageDto> UpdateMessageAsync(Guid id, CreateUpdateChatMessageDto input)
+        {
+            // 1. جلب الرسالة من قاعدة البيانات
+            var chatMsg = await _chatRepo.GetAsync(id);
+
+            // 3. تحديث نص الرسالة
+            chatMsg.Message = input.Message;
+
+            // يمكنك إضافة حقل IsEdited في جدول ChatMessage إذا أردت إظهار كلمة "معدلة"
+            // chatMsg.IsEdited = true;
+
+            await _chatRepo.UpdateAsync(chatMsg);
+
+            // 4. إرسال تحديث عبر SignalR (اختياري ولكن مهم لمبرمج الفلاتر)
+            // حتى يرى الطرف الآخر التعديل فوراً
+            var messageDto = new ChatMessageDto
+            {
+                Id = chatMsg.Id,
+                SenderId = chatMsg.SenderId,
+                ReceverId = chatMsg.ReceverId,
+                Message = chatMsg.Message,
+                CreationTime = chatMsg.CreationTime,
+                // يمكنك جلب الصورة والاسم هنا أيضاً إذا لزم الأمر
+            };
+            return messageDto;
+
+            // إرسال الـ DTO المحدث للطرفين (المرسل والمستقبل)
+            // await _chatHubContext.Clients.Users(chatMsg.SenderId.ToString(), chatMsg.ReceverId.ToString())
+            //                      .SendAsync("MessageUpdated", messageDto);
+        }
+
         [Authorize]
         public async Task<PagedResultDto<ChatMessageDto>> GetMessagesAsync(
             Guid receverId,
@@ -129,5 +163,25 @@ namespace Dev.Acadmy.Chats
 
             return new PagedResultDto<ChatMessageDto>(totalCount, dtos);
         }
+
+        [Authorize]
+        public async Task DeleteMessageAsync(Guid id)
+        {
+            // 1. جلب الرسالة من قاعدة البيانات
+            var chatMsg = await _chatRepo.GetAsync(id);
+
+           
+            // 3. تنفيذ الحذف
+            // إذا كنت تستخدم Soft Delete (حذف منطقي) ستختفي من الاستعلامات تلقائياً
+            await _chatRepo.DeleteAsync(chatMsg);
+
+            // 4. إشعار مبرمج الفلاتر (SignalR)
+            // نرسل الـ Id الخاص بالرسالة المحذوفة ليقوم بحذفها من القائمة في الموبايل
+            /*
+            await _chatHubContext.Clients.User(chatMsg.ReceverId.ToString())
+                                 .SendAsync("MessageDeleted", new { id = chatMsg.Id });
+            */
+        }
+
     }
 }

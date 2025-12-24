@@ -24,6 +24,7 @@ namespace Dev.Acadmy.Courses
         public Guid? SubjectId { get; set; }
         // هل يتم عرض عدد المشتركين للمستخدمين؟
         public bool ShowSubscriberCount { get; set; } 
+        public int SubscriberCount { get; set; }    
         public string? SubjectName { get; set; }
         public Guid? GradelevelId { get; set; }
         public string? GradelevelName { get; set; }

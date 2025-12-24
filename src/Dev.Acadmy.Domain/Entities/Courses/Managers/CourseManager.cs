@@ -34,7 +34,6 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         private readonly MediaItemManager _mediaItemManager; 
         private readonly IIdentityUserRepository _userRepository;
         private readonly QuestionBankManager _questionBankManager;
-        private readonly IRepository<CourseStudent, Guid> _courseStudentRepository;
         private readonly ChapterManager _chapterManager;
         private readonly CourseInfoManager _courseInfoManager;
         private readonly LectureManager _lectureManager;
@@ -51,7 +50,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         private readonly ICourseFeedbackRepository _courseFeedbackRepo;
         private readonly IMediaItemRepository _mediaItemRepo;
         private readonly IQuizRepository _quizRepo;
-        public CourseManager(IQuizRepository quizRepo, IMediaItemRepository mediaItemRepo, ICourseFeedbackRepository courseFeedbackRepo,ICourseRepository courseRepo,  IRepository<QuestionBank, Guid> questionBankRepository, IRepository<Exam ,Guid> examRepository, ExamManager examManager, IRepository<Lecture, Guid> lectureRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<Chapter, Guid> chapterRepository,IRepository<QuizStudent, Guid> quizStudentRepository, QuestionManager questionManager, QuizManager quizManger, LectureManager lectureManager, CourseInfoManager courseInfoManager, ChapterManager chapterManager, IRepository<CourseStudent, Guid> courseStudentRepository, QuestionBankManager questionBankManager, IIdentityUserRepository userRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IRepository<Entities.Course> courseRepository , IMapper mapper) 
+        private readonly ICourseStudentRepository _courseStudentRepository;
+        public CourseManager(IQuizRepository quizRepo, IMediaItemRepository mediaItemRepo, ICourseFeedbackRepository courseFeedbackRepo,ICourseRepository courseRepo,  IRepository<QuestionBank, Guid> questionBankRepository, IRepository<Exam ,Guid> examRepository, ExamManager examManager, IRepository<Lecture, Guid> lectureRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<Chapter, Guid> chapterRepository,IRepository<QuizStudent, Guid> quizStudentRepository, QuestionManager questionManager, QuizManager quizManger, LectureManager lectureManager, CourseInfoManager courseInfoManager, ChapterManager chapterManager, ICourseStudentRepository courseStudentRepository, QuestionBankManager questionBankManager, IIdentityUserRepository userRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IRepository<Entities.Course> courseRepository , IMapper mapper) 
         {
             _quizRepo = quizRepo;
             _mediaItemRepo = mediaItemRepo;
@@ -204,15 +204,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 .ToListAsync();
 
             var mediaItems = new Dictionary<Guid, MediaItem>();
-            foreach (var course in courses)
-            {
-                var media = await _mediaItemManager.GetAsync(course.Id);
-                if (media != null)
-                {
-                    mediaItems[course.Id] = media;
-                }
-            }
-
+            var courseIds = courses.Select(x => x.Id);
+            var coursesCountDic = await _courseStudentRepository.GetTotalSubscribersPerCourseAsync(courseIds);
+            var mediaItemDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync((List<Guid>)courseIds);
             var courseDtos = courses.Select(course => new CourseInfoHomeDto
             {
                 Id = course.Id,
@@ -221,9 +215,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 PdfUrl = course.PdfUrl,
                 Description = course.Description,
                 Price = course.Price,
-                LogoUrl = mediaItems.TryGetValue(course.Id, out var media)
-                    ? media.Url
-                    : "",
+                LogoUrl = mediaItemDic.TryGetValue(course.Id, out var media)? media: "",
+                SubscriberCount = coursesCountDic.TryGetValue(course.Id, out var subcount) ? subcount : 0,
                 UserId = course.UserId,
                 UserName = course.User?.Name ?? "",
                 CollegeId = course.CollegeId,
@@ -580,10 +573,6 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                     }
                 }
             }
-
-
-
-
             return newCourse.Id;
         }
 
