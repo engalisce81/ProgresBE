@@ -13,8 +13,6 @@ namespace Dev.Acadmy.Dtos.Response.Posts
         public string Content { get; set; }
         public bool IsGeneral { get; set; }
         public string AuthorName { get; set; }
-        public int CommentsCount { get; set; }
-        public int ReactionsCount { get; set; }
         public string LogoUrl { get; set; }
         public int TotalCommentsCount { get; set; }
         public List<ReactionSummaryDto> ReactionsSummaries { get; set; }

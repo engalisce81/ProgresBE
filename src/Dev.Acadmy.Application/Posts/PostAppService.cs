@@ -8,6 +8,7 @@ using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -98,8 +99,9 @@ namespace Dev.Acadmy.Posts
 
             return new PagedResultDto<PostDto>(totalCount, posts);
         }
-
-        public async Task<ResponseApi<PostDto>> CreateAsync(CreateUpdatePostDto input)
+        [IgnoreAntiforgeryToken] // ضروري جداً عند التعامل مع IFormFile و Swagger
+        [Consumes("multipart/form-data")] // هذا السطر يخبر Swagger أن الطلب يحتوي على ملف
+        public async Task<ResponseApi<PostDto>> CreateAsync([FromForm] CreateUpdatePostDto input)
         {
             var post = await _postManager.CreateAsync(input.Title, input.Content, input.IsGeneral, CurrentUser.GetId());
             var result = await _postRepository.InsertAsync(post, autoSave: true);
@@ -114,8 +116,9 @@ namespace Dev.Acadmy.Posts
 
             return new ResponseApi<PostDto> { Data = dto, Success = true, Message = "تم النشر بنجاح" };
         }
-
-        public async Task<ResponseApi<PostDto>> UpdateAsync(Guid id, CreateUpdatePostDto input)
+        [IgnoreAntiforgeryToken] // ضروري جداً عند التعامل مع IFormFile و Swagger
+        [Consumes("multipart/form-data")] // هذا السطر يخبر Swagger أن الطلب يحتوي على ملف
+        public async Task<ResponseApi<PostDto>> UpdateAsync(Guid id, [FromForm] CreateUpdatePostDto input)
         {
             var post = await _postRepository.GetAsync(id);
             await _postManager.UpdateAsync(post, input.Title, input.Content, input.IsGeneral, CurrentUser.GetId());
