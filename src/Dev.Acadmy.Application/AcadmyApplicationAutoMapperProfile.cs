@@ -4,12 +4,15 @@ using Dev.Acadmy.Courses;
 using Dev.Acadmy.Dtos.Request.Advertisementes;
 using Dev.Acadmy.Dtos.Request.Chats;
 using Dev.Acadmy.Dtos.Request.Courses;
+using Dev.Acadmy.Dtos.Request.Posts;
 using Dev.Acadmy.Dtos.Response.Advertisementes;
 using Dev.Acadmy.Dtos.Response.Chats;
 using Dev.Acadmy.Dtos.Response.Courses;
+using Dev.Acadmy.Dtos.Response.Posts;
 using Dev.Acadmy.Entities.Advertisementes.Entities;
 using Dev.Acadmy.Entities.Chats.Entites;
 using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Entities.Posts.Entities;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
@@ -124,6 +127,16 @@ public class AcadmyApplicationAutoMapperProfile : Profile
         CreateMap<CourseFeedback, CourseFeedbackDto>();
         CreateMap< CourseFeedback , CreateUpdateCourseFeedbackDto>();
 
+
+        // CourseStudent
+        CreateMap<Post, PostDto>();
+        CreateMap<CreateUpdatePostDto, Post>();
+
+        // CourseStudent
+        CreateMap<Comment, CommentDto>();
+        CreateMap<CreateUpdateCommentDto, Comment>();
+
+       
 
 
 

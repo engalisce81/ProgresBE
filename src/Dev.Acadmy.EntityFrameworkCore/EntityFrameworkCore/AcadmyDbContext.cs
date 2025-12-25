@@ -5,6 +5,8 @@ using Dev.Acadmy.Emails;
 using Dev.Acadmy.Entities.Advertisementes.Entities;
 using Dev.Acadmy.Entities.Chats.Entites;
 using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Entities.Posts.Entities;
+using Dev.Acadmy.Entities.Reports.Entities;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.MediaItems;
@@ -96,6 +98,11 @@ public class AcadmyDbContext :
     public DbSet<CourseFeedback> CourseFeedbacks { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
     public DbSet<Advertisement> Advertisements { get; set; }
+    public DbSet<Post> Posts { get; set; }
+    public DbSet<Comment> Comments { get; set; }
+    public DbSet<Reaction> Reactions { get; set; }
+    public DbSet<UserReport> UserReports { get; set; }
+
     public AcadmyDbContext(DbContextOptions<AcadmyDbContext> options)
         : base(options)
     {

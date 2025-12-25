@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,11 @@ namespace Dev.Acadmy.MediaItems
 {
     public class MediaItemManager:DomainService
     {
-        private readonly IRepository<MediaItem, Guid> _mediaItemRepository;
+        private readonly IMediaItemRepository _mediaItemRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper _mapper;
 
-        public MediaItemManager(IRepository<MediaItem, Guid> mediaItemRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        public MediaItemManager(IMediaItemRepository mediaItemRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _mediaItemRepository = mediaItemRepository;
             _mapper = mapper;
@@ -164,6 +165,22 @@ namespace Dev.Acadmy.MediaItems
             // URL كامل للملف
             var fileUrl = $"{baseUrl}/images/{fileName}";
             return new ResponseApi<string> { Data = fileUrl, Message = "save success", Success = true };
+        }
+
+        public async Task<string> UpdateAsync(IFormFile file, Guid refId)
+        {
+            string url = string.Empty;
+            if (file != null)
+            {
+                // ميثود InsertAsync هنا يجب أن تتعامل مع استبدال الصورة القديمة بالجديدة
+                url = await _mediaItemRepository.UpdateAsync(file, refId );
+            }
+            else
+            {
+                // إذا لم يتم رفع ملف جديد، نجلب الرابط الحالي للحفاظ عليه في الـ DTO
+                url = (await _mediaItemRepository.FirstOrDefaultAsync(x => x.RefId == refId))?.Url ?? string.Empty;
+            }
+            return url;
         }
     }
 }
