@@ -231,6 +231,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 GradelevelName = course.Subject?.GradeLevel?.Name ?? string.Empty,
                 YouTubeVideoUrl = course.YouTubeVideoUrl,
                 DriveVideoUrl = course.DriveVideoUrl,
+                HasYouTubeVideo=course.HasYouTubeVideo,
+                HasDriveVideo=course.HasDriveVideo, 
                 IsQuiz = course.IsQuiz,
                 ShowSubscriberCount = course.ShowSubscriberCount,
             }).ToList();

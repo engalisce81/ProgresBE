@@ -22,7 +22,7 @@ namespace Dev.Acadmy.Repositories
        
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-           public MediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)  : base(dbContextProvider)
+           public MediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider , IHttpContextAccessor httpContextAccessor)  : base(dbContextProvider)
         {
             _httpContextAccessor = httpContextAccessor;
         }
