@@ -1,17 +1,16 @@
-﻿using System;
+﻿using Dev.Acadmy.Entities.Advertisementes.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
+
 
 namespace Dev.Acadmy.Entities.Advertisementes.Managers
 {
-    using Volo.Abp.Domain.Services;
-    using Volo.Abp.Domain.Repositories;
-    using Volo.Abp;
-    using Dev.Acadmy.Entities.Advertisementes.Entities;
-
+    
     public class AdvertisementManager : DomainService
     {
         private readonly IRepository<Advertisement, Guid> _adRepository;
@@ -36,7 +35,7 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
             var queryable = await _adRepository.GetQueryableAsync();
 
             queryable = queryable.WhereIf(!string.IsNullOrWhiteSpace(search),
-                x => x.Title.Contains(search!) || x.TargetUrl.Contains(search!));
+                x => x.Title.Contains(search!) );
 
             var totalCount = await AsyncExecuter.CountAsync(queryable);
             var skipCount = (pageNumber - 1) * pageSize;
@@ -51,7 +50,8 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
         // Create Logic
         public async Task<Advertisement> CreateAsync(
             string title,
-            string targetUrl,
+            string youtubeUrl,
+            string driveUrl,
             DateTime startDate,
             DateTime endDate,
             bool isActive)
@@ -69,19 +69,13 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
                 throw new UserFriendlyException("يوجد إعلان بنفس هذا العنوان بالفعل");
             }
 
-            return new Advertisement(
-                title,
-                targetUrl,
-                startDate,
-                endDate,
-                isActive
-            );
+            return new Advertisement( title,youtubeUrl ,driveUrl,startDate , endDate , isActive);
         }
 
         // Update Logic
         public async Task UpdateAsync(
         Advertisement ad, // الكيان الحالي المراد تعديله
-        string title, string imageUrl, string targetUrl,
+        string title, string imageUrl, string youTubeVideoUrl,string driveVideoUrl,
         DateTime startDate, DateTime endDate, bool isActive)
         {
             // 1. التأكد أن تاريخ النهاية بعد البداية
@@ -99,7 +93,8 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
 
             // 3. تحديث البيانات
             ad.Title = title;
-            ad.TargetUrl = targetUrl;
+            ad.YouTubeVideoUrl = youTubeVideoUrl;
+            ad.DriveVideoUrl = driveVideoUrl;
             ad.StartDate = startDate;
             ad.EndDate = endDate;
             ad.IsActive = isActive;

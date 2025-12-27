@@ -32,7 +32,10 @@ namespace Dev.Acadmy.Courses
         public bool AlreadyRequest { get; set;}
         public int ChapterCount { get; set; }
         public int LectureCount { get; set; }
-        public string IntroductionVideoUrl { get; set; }
+        public bool HasYouTubeVideo { get; set; }
+        public bool HasDriveVideo { get; set; }
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
         public int? DurationInWeeks { get; set; } // null if lifetime
         public ICollection<string> Infos { get;set;} = new List<string>();
         public ICollection<CourseChaptersDto> courseChaptersDtos { get; set; } = new List<CourseChaptersDto>();

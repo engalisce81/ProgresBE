@@ -85,7 +85,8 @@ namespace Dev.Acadmy.Services
         {
             var ad = await _adManager.CreateAsync(
                 input.Title,
-                input.TargetUrl,
+                input.YouTubeVideoUrl,
+                input.DriveVideoUrl,
                 input.StartDate,
                 input.EndDate,
                 input.IsActive
@@ -110,7 +111,8 @@ namespace Dev.Acadmy.Services
                 ad,
                 input.Title,
                 input.ImageUrl,
-                input.TargetUrl,
+                input.YouTubeVideoUrl,
+                input.DriveVideoUrl,
                 input.StartDate,
                 input.EndDate,
                 input.IsActive

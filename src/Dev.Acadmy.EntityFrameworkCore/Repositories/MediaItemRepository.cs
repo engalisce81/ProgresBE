@@ -16,12 +16,13 @@ using Volo.Abp.EntityFrameworkCore;
 
 namespace Dev.Acadmy.Repositories
 {
-    public class CoreMediaItemRepository
+    public class MediaItemRepository
         : EfCoreRepository<AcadmyDbContext, MediaItem, Guid>, IMediaItemRepository
     {
+       
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public CoreMediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider, IHttpContextAccessor httpContextAccessor)
-            : base(dbContextProvider)
+
+           public MediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)  : base(dbContextProvider)
         {
             _httpContextAccessor = httpContextAccessor;
         }
