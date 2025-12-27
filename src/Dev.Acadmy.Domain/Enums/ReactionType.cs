@@ -6,9 +6,13 @@ using System.Threading.Tasks;
 
 namespace Dev.Acadmy.Enums
 {
-    //public enum EducationType
-    //{
-    //    UNIVERSITY= "UNIVERSITY",
-    //    PREUNVIRSITY = "PRE-UNVIRSITY",
-    //}
+    public enum ReactionType
+    {
+        Like = 1,
+        Love = 2,
+        Haha = 3,
+        Wow = 4,
+        Sad = 5,
+        Angry = 6
+    }
 }

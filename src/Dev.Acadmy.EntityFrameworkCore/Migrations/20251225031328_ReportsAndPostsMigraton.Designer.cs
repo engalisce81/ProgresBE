@@ -3,6 +3,7 @@ using System;
 using Dev.Acadmy.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Volo.Abp.EntityFrameworkCore;
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace Dev.Acadmy.Migrations
 {
     [DbContext(typeof(AcadmyDbContext))]
-    partial class AcadmyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251225031328_ReportsAndPostsMigraton")]
+    partial class ReportsAndPostsMigraton
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -233,9 +236,6 @@ namespace Dev.Acadmy.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
 
-                    b.Property<string>("DriveVideoUrl")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp without time zone");
 
@@ -258,13 +258,14 @@ namespace Dev.Acadmy.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("TargetUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<string>("YouTubeVideoUrl")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -347,9 +348,6 @@ namespace Dev.Acadmy.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("DriveVideoUrl")
-                        .HasColumnType("text");
-
                     b.Property<int?>("DurationInDays")
                         .HasColumnType("integer");
 
@@ -357,6 +355,10 @@ namespace Dev.Acadmy.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
+
+                    b.Property<string>("IntroductionVideoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -405,9 +407,6 @@ namespace Dev.Acadmy.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("YouTubeVideoUrl")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -915,19 +914,12 @@ namespace Dev.Acadmy.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
 
-                    b.Property<string>("DriveVideoUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsFree")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRequiredQuiz")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsVisible")
@@ -954,7 +946,8 @@ namespace Dev.Acadmy.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
-                    b.Property<string>("YouTubeVideoUrl")
+                    b.Property<string>("VideoUrl")
+                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
