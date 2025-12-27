@@ -24,7 +24,10 @@ namespace Dev.Acadmy.Configuration
             builder.Property(x => x.Content)
                    .HasMaxLength(5000);
 
-            builder.Property(x => x.VideoUrl)
+            builder.Property(x => x.YouTubeVideoUrl)
+                   .HasMaxLength(1000);
+
+            builder.Property(x => x.DriveVideoUrl)
                    .HasMaxLength(1000);
 
             builder.Property(x => x.IsVisible)

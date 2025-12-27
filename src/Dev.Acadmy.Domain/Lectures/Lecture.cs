@@ -14,10 +14,14 @@ namespace Dev.Acadmy.Lectures
     {
         public string Title { get; set; }
         public string Content { get; set; }
-        public string VideoUrl { get; set; }
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
+        public bool HasYouTubeVideo => !string.IsNullOrWhiteSpace(YouTubeVideoUrl);
+        public bool HasDriveVideo => !string.IsNullOrWhiteSpace(DriveVideoUrl);
         public Guid ChapterId { get; set; }
         public bool IsFree { get; set; }
         public bool IsVisible { get; set; }
+        public bool IsRequiredQuiz { get; set; }
         public int QuizTryCount { get; set; }
         public int SuccessQuizRate { get; set; }
 

@@ -15,8 +15,9 @@ namespace Dev.Acadmy.Courses
         public bool IsPdf { get; set; }
         public string PdfUrl { get; set; }
         // هل يتم عرض عدد المشتركين للمستخدمين؟
-        public bool ShowSubscriberCount { get; set; } 
-        public string IntroductionVideoUrl { get; set; }
+        public bool ShowSubscriberCount { get; set; }
+        public string YouTubeVideoUrl { get; set; }
+        public string DriveVideoUrl { get; set; }
         public Guid? SubjectId { get; set; }
         public bool IsQuiz { get; set; }
         public ICollection<string> Infos { get; set; }= new List<string>();

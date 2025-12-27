@@ -244,8 +244,12 @@ namespace Dev.Acadmy.Chapters
                         LectureId = l.Id,
                         Title = l.Title,
                         Content = l.Content,
-                        VideoUrl = l.VideoUrl,
-                        Quiz = quizDto
+                        DriveVideoUrl= l.DriveVideoUrl,
+                        YouTubeVideoUrl = l.YouTubeVideoUrl,
+                        HasDriveVideo = l.HasDriveVideo,
+                        HasYouTubeVideo = l.HasYouTubeVideo,
+                        Quiz = quizDto,
+                        IsQuizRequired = l.IsRequiredQuiz,
                     });
 
                     foreach (var dto in lectureDtos)

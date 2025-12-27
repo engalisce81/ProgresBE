@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace Dev.Acadmy.Entities.Advertisementes.Entities
@@ -10,20 +6,35 @@ namespace Dev.Acadmy.Entities.Advertisementes.Entities
     public class Advertisement : AuditedAggregateRoot<Guid>
     {
         public string Title { get; set; }
-        public string TargetUrl { get; set; }
+
+        // روابط الفيديوهات
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
+
+        // خصائص مساعدة (Read-only) للتأكد من وجود الرابط
+        public bool HasYouTubeVideo => !string.IsNullOrWhiteSpace(YouTubeVideoUrl);
+        public bool HasDriveVideo => !string.IsNullOrWhiteSpace(DriveVideoUrl);
+
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
 
-        public Advertisement() { }
-        public Advertisement(string title, string targetUrl, DateTime startDate, DateTime endDate, bool isActive)
+        protected Advertisement() { }
+
+        public Advertisement(
+            string title,
+            string youtubeUrl,
+            string driveUrl,
+            DateTime startDate,
+            DateTime endDate,
+            bool isActive = true) 
         {
             Title = title;
-            TargetUrl = targetUrl;
+            YouTubeVideoUrl = youtubeUrl;
+            DriveVideoUrl = driveUrl;
             StartDate = startDate;
             EndDate = endDate;
             IsActive = isActive;
         }
-
     }
 }

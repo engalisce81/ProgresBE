@@ -111,7 +111,10 @@ namespace Dev.Acadmy.Lectures
                 ChapterName = l.Chapter?.Name,
                 Content = l.Content,
                 Title = l.Title,
-                VideoUrl = l.VideoUrl,
+                YouTubeVideoUrl = l.YouTubeVideoUrl,
+                DriveVideoUrl = l.DriveVideoUrl,
+                HasYouTubeVideo = l.HasYouTubeVideo,
+                HasDriveVideo = l.HasDriveVideo,
                 CourseId = l.Chapter?.CourseId ?? Guid.Empty,
                 CourseName = l.Chapter?.Course?.Name,
                 IsVisible = l.IsVisible,
@@ -127,7 +130,6 @@ namespace Dev.Acadmy.Lectures
 
             return new PagedResultDto<LectureDto>(totalCount, lectureDtos);
         }
-
 
         public async Task<ResponseApi<LectureDto>> CreateAsync(CreateUpdateLectureDto input)
         {

@@ -28,7 +28,10 @@ namespace Dev.Acadmy.Courses
         public bool IsLifetime { get; set; } = false;
         public bool IsPdf { get; set; }
         public string PdfUrl { get; set; }
-        public string IntroductionVideoUrl { get; set; }
+        public bool HasYouTubeVideo { get; set; }
+        public bool HasDriveVideo { get; set; }
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
         public int? DurationInDays { get; set; } // null if lifetime
         public bool IsQuiz { get; set; }
         public ICollection<string> Infos { get; set; }= new List<string>();

@@ -229,7 +229,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 DurationInWeeks = course.DurationInDays / 7,
                 GradelevelId = course.Subject?.GradeLevelId ?? null,
                 GradelevelName = course.Subject?.GradeLevel?.Name ?? string.Empty,
-                IntroductionVideoUrl = course.IntroductionVideoUrl,
+                YouTubeVideoUrl = course.YouTubeVideoUrl,
+                DriveVideoUrl = course.DriveVideoUrl,
                 IsQuiz = course.IsQuiz,
                 ShowSubscriberCount = course.ShowSubscriberCount,
             }).ToList();
@@ -293,8 +294,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 LectureCount = totalLectureCount,
                 ChapterCount = course.Chapters.Count,
                 DurationInWeeks = course.DurationInDays / 7,
-                IntroductionVideoUrl = course.IntroductionVideoUrl,
-
+                YouTubeVideoUrl = course.YouTubeVideoUrl,
+                DriveVideoUrl = course.DriveVideoUrl,
+                HasDriveVideo = course.HasDriveVideo,
+                HasYouTubeVideo = course.HasYouTubeVideo,
                 CollegeId = course.CollegeId,
                 CollegeName = course.College?.Name ?? "",
                 SubjectId = course.Subject?.Id,
@@ -411,7 +414,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                         LectureId = l.Id,
                         Title = l.Title,
                         Content = l.Content,
-                        VideoUrl = l.VideoUrl,
+                        YouTubeVideoUrl = l.YouTubeVideoUrl,
+                        DriveVideoUrl = l.DriveVideoUrl,
                         Quiz = quizDto
                     };
 
@@ -491,7 +495,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 DurationInDays = course.DurationInDays,
                 IsPdf = course.IsPdf,
                 PdfUrl= course.PdfUrl,
-                IntroductionVideoUrl= course.IntroductionVideoUrl,
+                YouTubeVideoUrl= course.YouTubeVideoUrl,
+                DriveVideoUrl = course.DriveVideoUrl,
+
             };
             var resultCourse = await _courseRepository.InsertAsync(newCourse, autoSave: true);
             await _mediaItemManager.CreateAsync(new CreateUpdateMediaItemDto { Url =  _mediaItemManager.GetAsync(course.Id).Result?.Url ?? "", RefId = resultCourse.Id, IsImage = true });
@@ -522,7 +528,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                     {
                         Title = lecture.Title,
                         Content = lecture.Content,
-                        VideoUrl = lecture.VideoUrl,
+                        YouTubeVideoUrl = lecture.YouTubeVideoUrl,
+                        DriveVideoUrl = lecture.DriveVideoUrl,
                         ChapterId = chapterDto.Data.Id,
                         IsVisible = lecture.IsVisible,
                         QuizTryCount = lecture.QuizTryCount,

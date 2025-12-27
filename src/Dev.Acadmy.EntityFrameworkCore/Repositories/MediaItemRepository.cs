@@ -12,10 +12,10 @@ using Volo.Abp.EntityFrameworkCore;
 
 namespace Dev.Acadmy.Repositories
 {
-    public class CoreMediaItemRepository
+    public class MediaItemRepository
         : EfCoreRepository<AcadmyDbContext, MediaItem, Guid>, IMediaItemRepository
     {
-        public CoreMediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
+        public MediaItemRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider)
         {
         }

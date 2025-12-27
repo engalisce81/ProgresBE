@@ -33,7 +33,12 @@ namespace Dev.Acadmy.Entities.Courses.Entities
         public string PdfUrl {  get; set; }
         // هل يتم عرض عدد المشتركين للمستخدمين؟
         public bool ShowSubscriberCount { get; set; } = true;
-        public string IntroductionVideoUrl { get; set; }
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
+
+        // خصائص مساعدة (Read-only) للتأكد من وجود الرابط
+        public bool HasYouTubeVideo => !string.IsNullOrWhiteSpace(YouTubeVideoUrl);
+        public bool HasDriveVideo => !string.IsNullOrWhiteSpace(DriveVideoUrl);
         public int? DurationInDays { get; set; } // null if lifetime
         [ForeignKey(nameof(CollegeId))]
         public College College { get; set; }
