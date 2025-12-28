@@ -14,6 +14,7 @@ namespace Dev.Acadmy.Quizzes
         public int QuizTime { get; set; }
         public int QuizTryCount { get; set; }
         public string LeactureName { get; set; }
+        public string CourseName { get; set; }
 
     }
 }

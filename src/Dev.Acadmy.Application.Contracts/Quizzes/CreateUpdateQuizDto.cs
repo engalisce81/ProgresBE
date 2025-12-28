@@ -14,5 +14,6 @@ namespace Dev.Acadmy.Quizzes
         public int QuizTime { get; set; }
         public int QuizTryCount { get; set; }
         public Guid? LectureId { get; set; }
+        public Guid? CourseId { get; set; }
     }
 }

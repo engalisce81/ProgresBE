@@ -35,7 +35,7 @@ namespace Dev.Acadmy.Lectures
         [Authorize]
         public async Task<ResponseApi<QuizStudentDto>> MarkQuizAsync(Guid quizId, int score) => await _quizManager.MarkQuizAsync(quizId, score);
         [Authorize]
-        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid lectureId) => await _lectureManager.GetLectureWithQuizzesAsync(lectureId);
+        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId , bool isCourse) => await _lectureManager.GetLectureWithQuizzesAsync(refId , isCourse);
         
         // this in fuature i will take to admin panel
         [Authorize]
