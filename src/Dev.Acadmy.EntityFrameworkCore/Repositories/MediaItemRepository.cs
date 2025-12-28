@@ -1,15 +1,12 @@
 ﻿using Dev.Acadmy.EntityFrameworkCore;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.MediaItems;
-using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;

@@ -32,8 +32,10 @@ namespace Dev.Acadmy.Lectures
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
         private readonly IRepository<Question, Guid> _questionRepository;
         private readonly IMediaItemRepository _mediaItemRepository;
-        public LectureManager(IMediaItemRepository mediaItemRepository, IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
+        private readonly ICourseRepository _courseRepository;
+        public LectureManager(ICourseRepository courseRepository, IMediaItemRepository mediaItemRepository, IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
         {
+            _courseRepository = courseRepository;
             _mediaItemRepository = mediaItemRepository;
             _questionRepository = questionRepository;
             _quizStudentRepository = quizStudentRepository;
@@ -59,6 +61,9 @@ namespace Dev.Acadmy.Lectures
             dto.CourseId = lecture.Chapter.CourseId;
             dto.QuizTime = lecture?.Quizzes?.FirstOrDefault()?.QuizTime?? 0;
             dto.QuizTryCount = lecture?.QuizTryCount??0;
+            dto.IsRequiredQuiz = lecture?.IsRequiredQuiz?? false;
+            dto.IsFree = lecture?.IsFree ?? false;
+            dto.IsVisible = lecture?.IsVisible ?? false;
             return new ResponseApi<LectureDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
@@ -121,6 +126,8 @@ namespace Dev.Acadmy.Lectures
                 QuizCount = l.Quizzes.Count,
                 QuizTime = l.Quizzes.FirstOrDefault()?.QuizTime ?? 0,
                 QuizTryCount = (l.QuizTryCount * l.Quizzes.Count),
+                IsFree = l.IsFree,
+                IsRequiredQuiz = l.IsRequiredQuiz,
                 // جلب الروابط من الـ Lookup الموجود في الذاكرة
                 PdfUrls = mediaLookup[l.Id]
                             .Where(m => !m.IsImage)
@@ -216,16 +223,29 @@ namespace Dev.Acadmy.Lectures
             return new ResponseApi <QuizDetailsDto> { Data = dto, Success = true, Message = "find success" };
         }
 
-        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid lectureId)
+        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId ,bool isCourse)
         {
-            var lecture =await (await _lectureRepository.GetQueryableAsync())
+            var course = new Entities.Courses.Entities.Course();
+            var lecture = new Lecture();
+            if (!isCourse)
+            lecture =await (await _lectureRepository.GetQueryableAsync())
                 .Include(l => l.Quizzes)
                     .ThenInclude(q => q.Questions)
                         .ThenInclude(qq => qq.QuestionAnswers)
                 .Include(l => l.Quizzes)
                     .ThenInclude(q => q.Questions)
                         .ThenInclude(qq => qq.QuestionType) // 👈 عشان نجيب اسم النوع
-                .FirstOrDefaultAsync(l => l.Id == lectureId);
+                .FirstOrDefaultAsync(l => l.Id == refId);
+
+            else
+            course = await (await _courseRepository.GetQueryableAsync())
+                .Include(c => c.Quizzes)
+                    .ThenInclude(c =>c.Questions)
+                        .ThenInclude(qq => qq.QuestionAnswers)
+                .Include(l => l.Quizzes)
+                    .ThenInclude(q => q.Questions)
+                        .ThenInclude(qq => qq.QuestionType) // 👈 عشان نجيب اسم النوع
+                .FirstOrDefaultAsync(c => c.Id == refId);
 
             if (lecture == null)
             {
