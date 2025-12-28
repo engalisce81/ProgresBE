@@ -36,21 +36,25 @@ namespace Dev.Acadmy.Repositories
 
         public async Task<Dictionary<Guid, string>> GetUrlDictionaryByRefIdsAsync(List<Guid> refIds)
         {
+            // 1. حماية ضد القوائم الفارغة
+            if (refIds == null || !refIds.Any())
+                return new Dictionary<Guid, string>();
+
             var dbSet = await GetDbSetAsync();
 
-            var query = await dbSet
+            // 2. جلب البيانات الأساسية أولاً (Materialize)
+            var rawData = await dbSet
                 .Where(x => refIds.Contains(x.RefId))
-                .GroupBy(x => x.RefId) // تجميع الصور لكل مستخدم/كيان
-                .Select(group => new
-                {
-                    EntityId = group.Key,
-                    // نأخذ أحدث صورة تم رفعها بناءً على الـ CreationTime أو الـ ID
-                    Url = group.OrderByDescending(x => x.CreationTime).Select(x => x.Url).FirstOrDefault()
-                })
+                .Select(x => new { x.RefId, x.Url, x.CreationTime })
                 .ToListAsync();
 
-            // الآن نحول القائمة النظيفة (بدون تكرار) إلى Dictionary
-            return query.ToDictionary(x => x.EntityId, x => x.Url);
+            // 3. المعالجة في الذاكرة (In-Memory) لتجنب تعقيدات SQL GroupBy
+            return rawData
+                .GroupBy(x => x.RefId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.CreationTime).Select(x => x.Url).FirstOrDefault() ?? ""
+                );
         }
 
         public async Task<string> InsertAsync(IFormFile file, Guid RefId)
