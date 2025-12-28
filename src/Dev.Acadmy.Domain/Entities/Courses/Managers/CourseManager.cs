@@ -185,7 +185,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             else
             {
                 // نحافظ على الفلاتر العادية حسب الكلية والمادة والمستوى
-                queryable = queryable.Where(c =>
+                queryable = queryable.Include(x=>x.Subject).Where(c =>
                     c.CollegeId == collegeId &&
                     (!subjectId.HasValue || c.SubjectId == subjectId.Value) &&
                     (!termId.HasValue || c.Subject.TermId == termId.Value) &&
@@ -204,9 +204,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 .ToListAsync();
 
             var mediaItems = new Dictionary<Guid, MediaItem>();
-            var courseIds = courses.Select(x => x.Id);
+            var courseIds = courses.Select(x => x.Id).ToList();
             var coursesCountDic = await _courseStudentRepository.GetTotalSubscribersPerCourseAsync(courseIds);
-            var mediaItemDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync((List<Guid>)courseIds);
+            // ✅ تحويل البيانات لقائمة حقيقية قبل إرسالها للميثود
+            var mediaItemDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync(courseIds); 
             var courseDtos = courses.Select(course => new CourseInfoHomeDto
             {
                 Id = course.Id,
