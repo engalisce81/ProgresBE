@@ -223,45 +223,48 @@ namespace Dev.Acadmy.Lectures
             return new ResponseApi <QuizDetailsDto> { Data = dto, Success = true, Message = "find success" };
         }
 
-        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId ,bool isCourse)
+        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId, bool isCourse)
         {
-            var course = new Entities.Courses.Entities.Course();
-            var lecture = new Lecture();
+            List<Quiz> quizzes = new();
+            string title = "";
+            Guid id = Guid.Empty;
+
             if (!isCourse)
-            lecture =await (await _lectureRepository.GetQueryableAsync())
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionAnswers)
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionType) // 👈 عشان نجيب اسم النوع
-                .FirstOrDefaultAsync(l => l.Id == refId);
-
-            else
-            course = await (await _courseRepository.GetQueryableAsync())
-                .Include(c => c.Quizzes)
-                    .ThenInclude(c =>c.Questions)
-                        .ThenInclude(qq => qq.QuestionAnswers)
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionType) // 👈 عشان نجيب اسم النوع
-                .FirstOrDefaultAsync(c => c.Id == refId);
-
-            if (lecture == null)
             {
-                return new ResponseApi<LectureWithQuizzesDto>
-                {
-                    Data = null,
-                    Success = false,
-                    Message = "Lecture not found"
-                };
+                var lecture = await (await _lectureRepository.GetQueryableAsync())
+                    .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionAnswers)
+                    .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionType)
+                    .FirstOrDefaultAsync(l => l.Id == refId);
+
+                if (lecture == null) return new ResponseApi<LectureWithQuizzesDto> { Success = false, Message = "Lecture not found" };
+
+                quizzes = lecture.Quizzes.ToList();
+                title = lecture.Title;
+                id = lecture.Id;
             }
+            else
+            {
+                var course = await (await _courseRepository.GetQueryableAsync())
+                    .Include(c => c.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionAnswers)
+                    .Include(c => c.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionType)
+                    .FirstOrDefaultAsync(c => c.Id == refId);
+
+                if (course == null) return new ResponseApi<LectureWithQuizzesDto> { Success = false, Message = "Course not found" };
+
+                quizzes = course.Quizzes.ToList();
+                title = course.Name; // أو Name حسب موديل الكورس عندك
+                id = course.Id;
+            }
+
+            // تجهيز روابط الصور مرة واحدة بدلاً من الـ Loop (أداء أفضل بكتير)
+            var questionIds = quizzes.SelectMany(q => q.Questions).Select(ques => ques.Id).ToList();
+            var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(questionIds);
 
             var dto = new LectureWithQuizzesDto
             {
-                Id = lecture.Id,
-                Title = lecture.Title,
-                Quizzes = lecture.Quizzes.Select(q => new QuizWithQuestionsDto
+                Id = id,
+                Title = title,
+                Quizzes = quizzes.Select(q => new QuizWithQuestionsDto
                 {
                     Id = q.Id,
                     Title = q.Title,
@@ -270,9 +273,9 @@ namespace Dev.Acadmy.Lectures
                         Id = ques.Id,
                         Title = ques.Title,
                         Score = ques.Score,
-                        QuestionTypeId = ques.QuestionTypeId,           
-                        QuestionTypeName = ques.QuestionType?.Name?? "",
-                        LogoUrl = _mediaItemManager.GetAsync(ques.Id).Result?.Url ?? string.Empty,
+                        QuestionTypeId = ques.QuestionTypeId,
+                        QuestionTypeName = ques.QuestionType?.Name ?? "",
+                        LogoUrl = mediaItemDic.TryGetValue(ques.Id, out var url) ? url : string.Empty,
                         Answers = ques.QuestionAnswers.Select(ans => new QuestionAnswerPanelDto
                         {
                             Id = ans.Id,
@@ -283,12 +286,7 @@ namespace Dev.Acadmy.Lectures
                 }).ToList()
             };
 
-            return new ResponseApi<LectureWithQuizzesDto>
-            {
-                Data = dto,
-                Success = true,
-                Message = "Lecture loaded successfully"
-            };
+            return new ResponseApi<LectureWithQuizzesDto> { Data = dto, Success = true, Message = "Data loaded successfully" };
         }
 
 

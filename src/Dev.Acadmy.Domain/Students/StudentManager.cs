@@ -17,12 +17,14 @@ using Volo.Abp.Data;
 using Microsoft.EntityFrameworkCore;
 using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Entities.Courses.Entities;
+using Dev.Acadmy.Interfaces;
 
 namespace Dev.Acadmy.Students
 {
     public class StudentManager :DomainService
     {
         private readonly IIdentityUserRepository _userRepository;
+        private readonly IRepository<IdentityUser, Guid> _userRepo;
         private readonly IdentityUserManager _userManager;
         private readonly IRepository<AccountType, Guid> _accountTypeRepository;
         private readonly IIdentityRoleRepository _roleRepository;
@@ -33,8 +35,11 @@ namespace Dev.Acadmy.Students
         private readonly IRepository<Term, Guid> _termRepository;
         private readonly IRepository<CourseStudent, Guid> _courseStudentRepository;
         private readonly MediaItemManager _mediaItemManager;
-        public StudentManager(MediaItemManager mediaItemManager, IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<Subject, Guid> subjectRepository, IIdentityRoleRepository roleRepository, IIdentityUserRepository userRepository, IRepository<AccountType, Guid> accountTypeRepository, IdentityUserManager userManager)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        public StudentManager(IRepository<IdentityUser, Guid> userRepo, IMediaItemRepository mediaItemRepository, MediaItemManager mediaItemManager, IRepository<CourseStudent, Guid> courseStudentRepository, IRepository<Term, Guid> termRepository, IRepository<GradeLevel, Guid> gradeLevelRepository, IRepository<University, Guid> universityRepository, IRepository<College, Guid> collegeRepository, IRepository<Subject, Guid> subjectRepository, IIdentityRoleRepository roleRepository, IIdentityUserRepository userRepository, IRepository<AccountType, Guid> accountTypeRepository, IdentityUserManager userManager)
         {
+            _userRepo = userRepo;
+            _mediaItemRepository = mediaItemRepository;
             _mediaItemManager = mediaItemManager;
             _courseStudentRepository = courseStudentRepository;
             _termRepository = termRepository;
@@ -209,73 +214,105 @@ namespace Dev.Acadmy.Students
         }
 
         public async Task<PagedResultDto<StudentDto>> GetStudentListAsync(
-         int pageNumber = 1,
-         int pageSize = 10,
-         string? search = null)
+      int pageNumber = 1,
+      int pageSize = 10,
+      string? search = null)
         {
-            // 🟢 1. جلب جميع المستخدمين من المستودع
-            var users = await _userRepository.GetListAsync();
+            // 1. الحصول على الـ Queryable
+            var q = await _userRepo.GetQueryableAsync();
 
-            var resultList = new List<StudentDto>();
-
-            // 🟢 2. المرور على كل مستخدم
-            foreach (var user in users)
+            // 2. فلترة الطلاب فقط داخل الـ DB
+            var studentAccountType = await _accountTypeRepository.FirstOrDefaultAsync(x => x.Key == (int)AccountTypeKey.Student);
+            if (studentAccountType != null)
             {
-                var accountTypeId = user.GetProperty<Guid?>(SetPropConsts.AccountTypeId);
-                if (!accountTypeId.HasValue)
-                    continue;
+                var pattern = $"%\"{SetPropConsts.AccountTypeId}\":\"{studentAccountType.Id}\"%";
+                q = q.Where(u => EF.Functions.Like((string)(object)u.ExtraProperties, pattern));
+            }
 
-                var accountType = await _accountTypeRepository.FindAsync(accountTypeId.Value);
-                if (accountType == null || accountType.Key != (int)AccountTypeKey.Student)
-                    continue;
-                var courses = await (await _courseStudentRepository.GetQueryableAsync()).Where(x => x.UserId == user.Id && x.IsSubscibe).Include(x => x.Course).Select(x => x.Course.Name).ToListAsync();
+            // 3. فلترة البحث
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchKey = $"%{search.Trim()}%";
+                q = q.Where(u =>
+                    EF.Functions.Like(u.Name, searchKey) ||
+                    EF.Functions.Like(u.UserName, searchKey) ||
+                    EF.Functions.Like(u.PhoneNumber, searchKey));
+            }
 
-                // 🟢 بناء الـ DTO
-                var dto = new StudentDto
+            // 4. حساب العدد الإجمالي وعمل Paging
+            var totalCount = await q.CountAsync();
+            var users = await q
+                .OrderByDescending(x => x.CreationTime)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // 5. تجهيز القواميس (Dictionaries) لمنع الـ N+1 Problem
+            var userIds = users.Select(u => u.Id).ToList();
+
+            // استخراج الـ IDs المطلوبة من الـ ExtraProperties لليوزرز الحاليين فقط
+            var universityIds = users.Select(u => u.GetProperty<Guid>(SetPropConsts.UniversityId)).Distinct().ToList();
+            var collegeIds = users.Select(u => u.GetProperty<Guid>(SetPropConsts.CollegeId)).Distinct().ToList();
+            var gradeLevelIds = users.Select(u => u.GetProperty<Guid?>(SetPropConsts.GradeLevelId))
+                                     .Where(id => id.HasValue)
+                                     .Select(id => id!.Value)
+                                     .Distinct().ToList();
+
+            // جلب الأسماء في طلبية واحدة لكل جدول
+            var universityDic = await (await _universityRepository.GetQueryableAsync())
+                .Where(x => universityIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.Name);
+
+            var collegeDic =await  (await _collegeRepository.GetQueryableAsync())
+                .Where(x => collegeIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.Name);
+
+            var gradeDic = await (await _gradeLevelRepository.GetQueryableAsync()) // افترضنا وجود مستودع للمستويات الدراسية
+                .Where(x => gradeLevelIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.Name);
+
+            var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(userIds);
+
+            var courseStudents = await (await _courseStudentRepository.GetQueryableAsync())
+                .Include(x => x.Course)
+                .Where(x => userIds.Contains(x.UserId) && x.IsSubscibe)
+                .ToListAsync();
+
+            // 6. الـ Mapping النهائي
+            var studentDtos = users.Select(user =>
+            {
+                var uId = user.GetProperty<Guid>(SetPropConsts.UniversityId);
+                var cId = user.GetProperty<Guid>(SetPropConsts.CollegeId);
+                var gId = user.GetProperty<Guid?>(SetPropConsts.GradeLevelId);
+
+                return new StudentDto
                 {
                     Id = user.Id,
                     FullName = user.Name,
                     UserName = user.UserName,
-                    AccountTypeKey = accountType.Key,
-                    CollegeId = user.GetProperty<Guid>(SetPropConsts.CollegeId),
-                    UniversityId = user.GetProperty<Guid>(SetPropConsts.UniversityId),
+                    AccountTypeKey = (int)AccountTypeKey.Student,
+
+                    // بيانات الجامعة والكلية والمستوى من القواميس
+                    UniversityId = uId,
+                    UniversityName = universityDic.TryGetValue(uId, out var uName) ? uName : "",
+                    CollegeId = cId,
+                    CollegeName = collegeDic.TryGetValue(cId, out var cName) ? cName : "",
+                    GradeLevelId = gId,
+                    GradeLevelName = (gId.HasValue && gradeDic.TryGetValue(gId.Value, out var gName)) ? gName : "",
+
                     Gender = user.GetProperty<bool>(SetPropConsts.Gender),
-                    GradeLevelId = user.GetProperty<Guid?>(SetPropConsts.GradeLevelId),
+                    PhoneNumber = user.GetProperty<string>(SetPropConsts.PhoneNumber) ?? user.PhoneNumber,
                     StudentMobileIP = user.GetProperty<string>(SetPropConsts.StudentMobileIP),
-                    PhoneNumber = user.GetProperty<string>(SetPropConsts.PhoneNumber),
-                    CoursesName = courses,
-                    LogoUrl = (_mediaItemManager.GetAsync(user.Id).Result)?.Url ?? UserConsts.DefaultImg
+
+                    CoursesName = courseStudents
+                        .Where(cs => cs.UserId == user.Id)
+                        .Select(cs => cs.Course.Name)
+                        .ToList(),
+                    LogoUrl = mediaItemDic.TryGetValue(user.Id, out var url) ? url : UserConsts.DefaultImg
                 };
+            }).ToList();
 
-                resultList.Add(dto);
-            }
-
-            // 🟢 3. تطبيق البحث (لو موجود)
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                search = search.Trim().ToLower();
-                resultList = resultList
-                    .Where(x =>
-                        (!string.IsNullOrEmpty(x.FullName) && x.FullName.ToLower().Contains(search)) ||
-                        (!string.IsNullOrEmpty(x.UserName) && x.UserName.ToLower().Contains(search))
-                    )
-                    .ToList();
-            }
-
-            // 🟢 4. إجمالي السجلات بعد الفلترة
-            var totalCount = resultList.Count;
-
-            // 🟢 5. تطبيق الـ Pagination
-            var pagedResult = resultList
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // 🟢 6. إرجاع النتيجة بصيغة ABP القياسية
-            return new PagedResultDto<StudentDto>(
-                totalCount,
-                pagedResult
-            );
+            return new PagedResultDto<StudentDto>(totalCount, studentDtos);
         }
 
         public async Task DeleteAsync(Guid id)
