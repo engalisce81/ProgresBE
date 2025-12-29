@@ -50,8 +50,8 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
         // Create Logic
         public async Task<Advertisement> CreateAsync(
             string title,
-            string youtubeUrl,
-            string driveUrl,
+            string? youtubeUrl,
+            string? driveUrl,
             DateTime startDate,
             DateTime endDate,
             bool isActive)
@@ -75,7 +75,7 @@ namespace Dev.Acadmy.Entities.Advertisementes.Managers
         // Update Logic
         public async Task UpdateAsync(
         Advertisement ad, // الكيان الحالي المراد تعديله
-        string title, string imageUrl, string youTubeVideoUrl,string driveVideoUrl,
+        string title, string imageUrl, string? youTubeVideoUrl,string? driveVideoUrl,
         DateTime startDate, DateTime endDate, bool isActive)
         {
             // 1. التأكد أن تاريخ النهاية بعد البداية

@@ -23,8 +23,8 @@ namespace Dev.Acadmy.Entities.Advertisementes.Entities
 
         public Advertisement(
             string title,
-            string youtubeUrl,
-            string driveUrl,
+            string? youtubeUrl,
+            string? driveUrl,
             DateTime startDate,
             DateTime endDate,
             bool isActive = true) 
