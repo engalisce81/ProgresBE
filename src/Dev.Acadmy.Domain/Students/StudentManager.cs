@@ -1,23 +1,20 @@
-﻿using Dev.Acadmy.AccountCustoms;
-using Dev.Acadmy.AccountTypes;
-using Dev.Acadmy.LookUp;
-using Dev.Acadmy.Response;
-using Dev.Acadmy.Universites;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Domain.Repositories;
-using Volo.Abp;
-using Volo.Abp.Domain.Services;
-using Volo.Abp.Identity;
-using Volo.Abp.Data;
-using Microsoft.EntityFrameworkCore;
-using Dev.Acadmy.MediaItems;
+﻿using Dev.Acadmy.AccountTypes;
 using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Interfaces;
+using Dev.Acadmy.LookUp;
+using Dev.Acadmy.MediaItems;
+using Dev.Acadmy.Response;
+using Dev.Acadmy.Universites;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Volo.Abp;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Domain.Services;
+using Volo.Abp.Identity;
 
 namespace Dev.Acadmy.Students
 {
@@ -214,9 +211,9 @@ namespace Dev.Acadmy.Students
         }
 
         public async Task<PagedResultDto<StudentDto>> GetStudentListAsync(
-      int pageNumber = 1,
-      int pageSize = 10,
-      string? search = null)
+          int pageNumber = 1,
+          int pageSize = 10,
+          string? search = null)
         {
             // 1. الحصول على الـ Queryable
             var q = await _userRepo.GetQueryableAsync();
@@ -312,7 +309,7 @@ namespace Dev.Acadmy.Students
                 };
             }).ToList();
 
-            return new PagedResultDto<StudentDto>(totalCount, studentDtos);
+            return new PagedResultDto<StudentDto>(totalCount, studentDtos); 
         }
 
         public async Task DeleteAsync(Guid id)

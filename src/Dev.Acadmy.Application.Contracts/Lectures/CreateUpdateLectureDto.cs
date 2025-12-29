@@ -10,8 +10,8 @@ namespace Dev.Acadmy.Lectures
     {
         public string Title { get; set; }
         public string Content { get; set; }
-        public string YouTubeVideoUrl { get; set; }
-        public string DriveVideoUrl { get; set; }
+        public string? YouTubeVideoUrl { get; set; }
+        public string? DriveVideoUrl { get; set; }
         public Guid ChapterId { get; set; }
         public bool IsVisible { get; set; }
         public int QuizTime { get; set; }
