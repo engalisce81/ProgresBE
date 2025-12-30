@@ -185,7 +185,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             else
             {
                 // نحافظ على الفلاتر العادية حسب الكلية والمادة والمستوى
-                queryable = queryable.Where(c =>
+                queryable = queryable.Include(x=>x.Subject).Where(c =>
                     c.CollegeId == collegeId &&
                     (!subjectId.HasValue || c.SubjectId == subjectId.Value) &&
                     (!termId.HasValue || c.Subject.TermId == termId.Value) &&
@@ -204,9 +204,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 .ToListAsync();
 
             var mediaItems = new Dictionary<Guid, MediaItem>();
-            var courseIds = courses.Select(x => x.Id);
+            var courseIds = courses.Select(x => x.Id).ToList();
             var coursesCountDic = await _courseStudentRepository.GetTotalSubscribersPerCourseAsync(courseIds);
-            var mediaItemDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync((List<Guid>)courseIds);
+            // ✅ تحويل البيانات لقائمة حقيقية قبل إرسالها للميثود
+            var mediaItemDic = await _mediaItemRepo.GetUrlDictionaryByRefIdsAsync(courseIds); 
             var courseDtos = courses.Select(course => new CourseInfoHomeDto
             {
                 Id = course.Id,
@@ -229,7 +230,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 DurationInWeeks = course.DurationInDays / 7,
                 GradelevelId = course.Subject?.GradeLevelId ?? null,
                 GradelevelName = course.Subject?.GradeLevel?.Name ?? string.Empty,
-                IntroductionVideoUrl = course.IntroductionVideoUrl,
+                YouTubeVideoUrl = course.YouTubeVideoUrl?? string.Empty,
+                DriveVideoUrl = course.DriveVideoUrl?? string.Empty,
+                HasYouTubeVideo=course.HasYouTubeVideo,
+                HasDriveVideo=course.HasDriveVideo, 
                 IsQuiz = course.IsQuiz,
                 ShowSubscriberCount = course.ShowSubscriberCount,
             }).ToList();
@@ -293,8 +297,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 LectureCount = totalLectureCount,
                 ChapterCount = course.Chapters.Count,
                 DurationInWeeks = course.DurationInDays / 7,
-                IntroductionVideoUrl = course.IntroductionVideoUrl,
-
+                YouTubeVideoUrl = course.YouTubeVideoUrl,
+                DriveVideoUrl = course.DriveVideoUrl,
+                HasDriveVideo = course.HasDriveVideo,
+                HasYouTubeVideo = course.HasYouTubeVideo,
                 CollegeId = course.CollegeId,
                 CollegeName = course.College?.Name ?? "",
                 SubjectId = course.Subject?.Id,
@@ -411,7 +417,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                         LectureId = l.Id,
                         Title = l.Title,
                         Content = l.Content,
-                        VideoUrl = l.VideoUrl,
+                        YouTubeVideoUrl = l.YouTubeVideoUrl,
+                        DriveVideoUrl = l.DriveVideoUrl,
                         Quiz = quizDto
                     };
 
@@ -491,7 +498,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 DurationInDays = course.DurationInDays,
                 IsPdf = course.IsPdf,
                 PdfUrl= course.PdfUrl,
-                IntroductionVideoUrl= course.IntroductionVideoUrl,
+                YouTubeVideoUrl= course.YouTubeVideoUrl,
+                DriveVideoUrl = course.DriveVideoUrl,
+
             };
             var resultCourse = await _courseRepository.InsertAsync(newCourse, autoSave: true);
             await _mediaItemManager.CreateAsync(new CreateUpdateMediaItemDto { Url =  _mediaItemManager.GetAsync(course.Id).Result?.Url ?? "", RefId = resultCourse.Id, IsImage = true });
@@ -522,7 +531,8 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                     {
                         Title = lecture.Title,
                         Content = lecture.Content,
-                        VideoUrl = lecture.VideoUrl,
+                        YouTubeVideoUrl = lecture.YouTubeVideoUrl,
+                        DriveVideoUrl = lecture.DriveVideoUrl,
                         ChapterId = chapterDto.Data.Id,
                         IsVisible = lecture.IsVisible,
                         QuizTryCount = lecture.QuizTryCount,

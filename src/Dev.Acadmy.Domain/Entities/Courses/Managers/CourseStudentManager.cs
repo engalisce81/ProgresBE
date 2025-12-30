@@ -18,6 +18,7 @@ using Dev.Acadmy.Lectures;
 using Volo.Abp.Data;
 using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Courses;
+using Dev.Acadmy.Interfaces;
 
 
 namespace Dev.Acadmy.Entities.Courses.Managers
@@ -32,8 +33,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         private readonly MediaItemManager _mediaItemManager;
         private readonly IRepository<QuizStudent ,Guid> _quizStudentRepository;
         private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
-        public CourseStudentManager(CourseManager courseManager, IRepository<Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<QuizStudent, Guid> quizStudentRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<CourseStudent> coursestudentRepository)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        public CourseStudentManager(IMediaItemRepository mediaItemRepository, CourseManager courseManager, IRepository<Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<QuizStudent, Guid> quizStudentRepository, MediaItemManager mediaItemManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<CourseStudent> coursestudentRepository)
         {
+            _mediaItemRepository = mediaItemRepository;
             _courseRepository = courseRepository;
             _lectureTryRepository = lectureTryRepository;
             _quizStudentRepository = quizStudentRepository;
@@ -109,24 +112,64 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         }
 
 
-        public async Task<PagedResultDto<CourseStudentDto>> GetListAsync(int pageNumber, int pageSize,bool isSubscribe,Guid courseId ,string? search )
+        public async Task<PagedResultDto<CourseStudentDto>> GetListAsync(int pageNumber, int pageSize, bool isSubscribe, Guid courseId, string? search)
         {
-            var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
+            var currentUserId = _currentUser.GetId();
+            var roles = await _userRepository.GetRolesAsync(currentUserId);
+            var isAdmin = roles.Any(x => x.Name.ToUpper() == RoleConsts.Admin.ToUpper());
+
+            // 1. جلب الـ Queryable مع عمل Include للمستخدم والكورس لتجنب استعلامات إضافية
             var queryable = await _coursestudentRepository.GetQueryableAsync();
-            if (!string.IsNullOrWhiteSpace(search)) queryable = queryable.Include(x=>x.Course).Include(x=>x.User).Where(c => c.Course.Name.Contains(search) || c.User.Name.Contains(search));
-            var totalCount = await AsyncExecuter.CountAsync(queryable.Where(x=>x.IsSubscibe == isSubscribe && x.CourseId == courseId));
-            var coursestudents = new List<CourseStudent>();
-            if (roles.Any(x => x.Name.ToUpper() == RoleConsts.Admin.ToUpper())) coursestudents = await AsyncExecuter.ToListAsync(queryable.Include(x => x.Course).Include(x => x.User).Where(x=>x.IsSubscibe == isSubscribe && x.CourseId == courseId).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            else coursestudents = await AsyncExecuter.ToListAsync(queryable.Include(x => x.Course).Include(x => x.User).Where(c => c.Course.UserId == _currentUser.GetId() && c.IsSubscibe == isSubscribe && c.CourseId ==courseId).OrderByDescending(c => c.CreationTime).Skip((pageNumber - 1) * pageSize).Take(pageSize));
-            var coursestudentDtos = _mapper.Map<List<CourseStudentDto>>(coursestudents);
-            foreach(var dto in coursestudentDtos)
+            queryable = queryable.Include(x => x.User).Include(x => x.Course);
+
+            // 2. الفلترة الأساسية
+            var filteredQuery = queryable.Where(x => x.IsSubscibe == isSubscribe && x.CourseId == courseId);
+
+            // التحقق من الصلاحيات (Admin يرى الكل، المحاضر يرى طلاب كورساته فقط)
+            if (!isAdmin)
             {
-                var user = await _userRepository.GetAsync(dto.UserId);
-                dto.Name = user.Name;
-                var medaiItem = await _mediaItemManager.GetAsync(user.Id);
-                dto.LogoUrl = medaiItem?.Url ?? "";
-                dto.Email = user.Email;
+                filteredQuery = filteredQuery.Where(x => x.Course.UserId == currentUserId);
             }
+
+            // فلتر البحث النصي
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                filteredQuery = filteredQuery.Where(c => c.Course.Name.Contains(search) || c.User.Name.Contains(search));
+            }
+
+            // 3. حساب العدد الإجمالي قبل الـ Pagination
+            var totalCount = await AsyncExecuter.CountAsync(filteredQuery);
+
+            // 4. جلب البيانات (Pagination)
+            var list = await AsyncExecuter.ToListAsync(
+                filteredQuery
+                    .OrderByDescending(c => c.CreationTime)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+            );
+
+            // 5. حل مشكلة الميديا دفعة واحدة باستخدام الـ Dictionary (Bulk Fetch)
+            var userIds = list.Select(x => x.UserId).Distinct().ToList();
+            // جلب الروابط في Dictionary: Key هو الـ UserId والقيمة هي الـ Url
+            var mediaItemsDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(userIds);
+
+            // 6. التحويل إلى DTO ودمج البيانات
+            var coursestudentDtos = list.Select(cs => {
+                var dto = _mapper.Map<CourseStudentDto>(cs);
+
+                // تعبئة بيانات المستخدم (موجودة فعلياً في الذاكرة بسبب الـ Include)
+                if (cs.User != null)
+                {
+                    dto.Name = cs.User.Name;
+                    dto.Email = cs.User.Email;
+                    dto.PhoneNumber = cs.User.GetProperty<string>(SetPropConsts.PhoneNumber);
+                }
+                // جلب الصورة من الـ Dictionary (أداء عالي جداً O(1))
+                mediaItemsDic.TryGetValue(cs.UserId, out var url);
+                dto.LogoUrl = url ?? "";
+                return dto;
+            }).ToList();
+
             return new PagedResultDto<CourseStudentDto>(totalCount, coursestudentDtos);
         }
 
@@ -181,9 +224,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
         }
         
 
-        public async Task<ResponseApi<bool>> DeleteAsync(Guid userId)
+        public async Task<ResponseApi<bool>> DeleteAsync(Guid id)
         {
-            var coursestudent = await _coursestudentRepository.FirstOrDefaultAsync(x => x.UserId == userId);
+            var coursestudent = await _coursestudentRepository.FirstOrDefaultAsync(x => x.Id == id);
             if (coursestudent == null) return new ResponseApi<bool> { Data = false, Success = false, Message = "Not found coursestudent" };
             await _coursestudentRepository.DeleteAsync(coursestudent);
             return new ResponseApi<bool> { Data = true, Success = true, Message = "delete succeess" };

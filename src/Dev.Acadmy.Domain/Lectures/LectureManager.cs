@@ -32,8 +32,10 @@ namespace Dev.Acadmy.Lectures
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
         private readonly IRepository<Question, Guid> _questionRepository;
         private readonly IMediaItemRepository _mediaItemRepository;
-        public LectureManager(IMediaItemRepository mediaItemRepository, IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
+        private readonly ICourseRepository _courseRepository;
+        public LectureManager(ICourseRepository courseRepository, IMediaItemRepository mediaItemRepository, IRepository<Question, Guid> questionRepository, IRepository<QuizStudent, Guid> quizStudentRepository, IRepository<LectureTry, Guid> lectureTryRepository, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<Quiz,Guid> quizRepository, QuizManager quizManager, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Lecture,Guid> lectureRepository)
         {
+            _courseRepository = courseRepository;
             _mediaItemRepository = mediaItemRepository;
             _questionRepository = questionRepository;
             _quizStudentRepository = quizStudentRepository;
@@ -59,6 +61,9 @@ namespace Dev.Acadmy.Lectures
             dto.CourseId = lecture.Chapter.CourseId;
             dto.QuizTime = lecture?.Quizzes?.FirstOrDefault()?.QuizTime?? 0;
             dto.QuizTryCount = lecture?.QuizTryCount??0;
+            dto.IsRequiredQuiz = lecture?.IsRequiredQuiz?? false;
+            dto.IsFree = lecture?.IsFree ?? false;
+            dto.IsVisible = lecture?.IsVisible ?? false;
             return new ResponseApi<LectureDto> { Data = dto, Success = true, Message = "find succeess" };
         }
 
@@ -111,13 +116,18 @@ namespace Dev.Acadmy.Lectures
                 ChapterName = l.Chapter?.Name,
                 Content = l.Content,
                 Title = l.Title,
-                VideoUrl = l.VideoUrl,
+                YouTubeVideoUrl = l.YouTubeVideoUrl,
+                DriveVideoUrl = l.DriveVideoUrl,
+                HasYouTubeVideo = l.HasYouTubeVideo,
+                HasDriveVideo = l.HasDriveVideo,
                 CourseId = l.Chapter?.CourseId ?? Guid.Empty,
                 CourseName = l.Chapter?.Course?.Name,
                 IsVisible = l.IsVisible,
                 QuizCount = l.Quizzes.Count,
                 QuizTime = l.Quizzes.FirstOrDefault()?.QuizTime ?? 0,
                 QuizTryCount = (l.QuizTryCount * l.Quizzes.Count),
+                IsFree = l.IsFree,
+                IsRequiredQuiz = l.IsRequiredQuiz,
                 // جلب الروابط من الـ Lookup الموجود في الذاكرة
                 PdfUrls = mediaLookup[l.Id]
                             .Where(m => !m.IsImage)
@@ -127,7 +137,6 @@ namespace Dev.Acadmy.Lectures
 
             return new PagedResultDto<LectureDto>(totalCount, lectureDtos);
         }
-
 
         public async Task<ResponseApi<LectureDto>> CreateAsync(CreateUpdateLectureDto input)
         {
@@ -214,32 +223,48 @@ namespace Dev.Acadmy.Lectures
             return new ResponseApi <QuizDetailsDto> { Data = dto, Success = true, Message = "find success" };
         }
 
-        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid lectureId)
+        public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId, bool isCourse)
         {
-            var lecture =await (await _lectureRepository.GetQueryableAsync())
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionAnswers)
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionType) // 👈 عشان نجيب اسم النوع
-                .FirstOrDefaultAsync(l => l.Id == lectureId);
+            List<Quiz> quizzes = new();
+            string title = "";
+            Guid id = Guid.Empty;
 
-            if (lecture == null)
+            if (!isCourse)
             {
-                return new ResponseApi<LectureWithQuizzesDto>
-                {
-                    Data = null,
-                    Success = false,
-                    Message = "Lecture not found"
-                };
+                var lecture = await (await _lectureRepository.GetQueryableAsync())
+                    .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionAnswers)
+                    .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionType)
+                    .FirstOrDefaultAsync(l => l.Id == refId);
+
+                if (lecture == null) return new ResponseApi<LectureWithQuizzesDto> { Success = false, Message = "Lecture not found" };
+
+                quizzes = lecture.Quizzes.ToList();
+                title = lecture.Title;
+                id = lecture.Id;
             }
+            else
+            {
+                var course = await (await _courseRepository.GetQueryableAsync())
+                    .Include(c => c.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionAnswers)
+                    .Include(c => c.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionType)
+                    .FirstOrDefaultAsync(c => c.Id == refId);
+
+                if (course == null) return new ResponseApi<LectureWithQuizzesDto> { Success = false, Message = "Course not found" };
+
+                quizzes = course.Quizzes.ToList();
+                title = course.Name; // أو Name حسب موديل الكورس عندك
+                id = course.Id;
+            }
+
+            // تجهيز روابط الصور مرة واحدة بدلاً من الـ Loop (أداء أفضل بكتير)
+            var questionIds = quizzes.SelectMany(q => q.Questions).Select(ques => ques.Id).ToList();
+            var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(questionIds);
 
             var dto = new LectureWithQuizzesDto
             {
-                Id = lecture.Id,
-                Title = lecture.Title,
-                Quizzes = lecture.Quizzes.Select(q => new QuizWithQuestionsDto
+                Id = id,
+                Title = title,
+                Quizzes = quizzes.Select(q => new QuizWithQuestionsDto
                 {
                     Id = q.Id,
                     Title = q.Title,
@@ -248,9 +273,9 @@ namespace Dev.Acadmy.Lectures
                         Id = ques.Id,
                         Title = ques.Title,
                         Score = ques.Score,
-                        QuestionTypeId = ques.QuestionTypeId,           
-                        QuestionTypeName = ques.QuestionType?.Name?? "",
-                        LogoUrl = _mediaItemManager.GetAsync(ques.Id).Result?.Url ?? string.Empty,
+                        QuestionTypeId = ques.QuestionTypeId,
+                        QuestionTypeName = ques.QuestionType?.Name ?? "",
+                        LogoUrl = mediaItemDic.TryGetValue(ques.Id, out var url) ? url : string.Empty,
                         Answers = ques.QuestionAnswers.Select(ans => new QuestionAnswerPanelDto
                         {
                             Id = ans.Id,
@@ -261,12 +286,7 @@ namespace Dev.Acadmy.Lectures
                 }).ToList()
             };
 
-            return new ResponseApi<LectureWithQuizzesDto>
-            {
-                Data = dto,
-                Success = true,
-                Message = "Lecture loaded successfully"
-            };
+            return new ResponseApi<LectureWithQuizzesDto> { Data = dto, Success = true, Message = "Data loaded successfully" };
         }
 
 

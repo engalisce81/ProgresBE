@@ -14,6 +14,8 @@ using System.Linq;
 using Dev.Acadmy.MediaItems;
 using Microsoft.AspNetCore.Authorization;
 using Dev.Acadmy.Permissions;
+using Volo.Abp.Identity;
+using Volo.Abp.Users;
 
 namespace Dev.Acadmy.Services
 {
@@ -24,13 +26,22 @@ namespace Dev.Acadmy.Services
         private readonly IMapper _mapper;
         private readonly IMediaItemRepository _mediaItemRepository;
         private readonly MediaItemManager _mediaItemManager;
+        private readonly IRepository<IdentityUser ,Guid> _userRespository;
+        private readonly IdentityUserManager _userManager;
+        private readonly ICurrentUser _currentUser;
         public AdvertisementAppService(
             AdvertisementManager adManager,
             IRepository<Advertisement, Guid> adRepository,
             IMediaItemRepository mediaItemRepository,
             IMapper mapper,
-            MediaItemManager mediaItemManager)
+            MediaItemManager mediaItemManager,
+            IRepository<IdentityUser, Guid> userRespository,
+            IdentityUserManager userManager,
+            ICurrentUser currentUser)
         {
+            _currentUser = currentUser;
+            _userManager = userManager;
+            _userRespository = userRespository;
             _mediaItemManager = mediaItemManager;
             _mediaItemRepository = mediaItemRepository;
             _adManager = adManager;
@@ -85,7 +96,8 @@ namespace Dev.Acadmy.Services
         {
             var ad = await _adManager.CreateAsync(
                 input.Title,
-                input.TargetUrl,
+                input.YouTubeVideoUrl,
+                input.DriveVideoUrl,
                 input.StartDate,
                 input.EndDate,
                 input.IsActive
@@ -110,7 +122,8 @@ namespace Dev.Acadmy.Services
                 ad,
                 input.Title,
                 input.ImageUrl,
-                input.TargetUrl,
+                input.YouTubeVideoUrl,
+                input.DriveVideoUrl,
                 input.StartDate,
                 input.EndDate,
                 input.IsActive
@@ -178,10 +191,11 @@ namespace Dev.Acadmy.Services
 
             var skipCount = (pageNumber - 1) * pageSize;
             var queryable = await _adRepository.GetQueryableAsync();
-
+            var user = await _userRespository.GetAsync(_currentUser.GetId());
+            var isAdmin =  await _userManager.IsInRoleAsync(user, RoleConsts.Admin.ToLower());
             // الفلترة
-            var query = queryable.Where(x => x.IsActive && x.StartDate <= now && x.EndDate >= now);
-
+            var query = isAdmin? queryable: queryable.Where(x => x.IsActive && x.StartDate <= now && x.EndDate >= now);
+            //if()
             var totalCount = await AsyncExecuter.CountAsync(query);
 
             var ads = await AsyncExecuter.ToListAsync(

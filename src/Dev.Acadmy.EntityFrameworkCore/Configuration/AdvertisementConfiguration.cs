@@ -17,7 +17,6 @@ namespace Dev.Acadmy.EntityFrameworkCore
 
             // 3. إعدادات الحقول (اختياري ولكن يفضل للـ Best Practices)
             builder.Property(x => x.Title).IsRequired().HasMaxLength(256);
-            builder.Property(x => x.TargetUrl).IsRequired();
 
             // 4. إضافة Index على التواريخ والنشاط لأننا نستخدمهم كثيراً في الفلترة
             builder.HasIndex(x => new { x.IsActive, x.StartDate, x.EndDate });
