@@ -16,8 +16,12 @@ namespace Dev.Acadmy.Lectures
         public string Content { get; set; }
         public string? YouTubeVideoUrl { get; set; }
         public string? DriveVideoUrl { get; set; }
+        public string? TelegramVideoUrl { get; set; }
+
         public bool HasYouTubeVideo => !string.IsNullOrWhiteSpace(YouTubeVideoUrl);
         public bool HasDriveVideo => !string.IsNullOrWhiteSpace(DriveVideoUrl);
+        public bool HasTelegramVideo => !string.IsNullOrWhiteSpace(TelegramVideoUrl);
+
         public Guid ChapterId { get; set; }
         public bool IsFree { get; set; }
         public bool IsVisible { get; set; }

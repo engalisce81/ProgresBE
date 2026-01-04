@@ -102,7 +102,7 @@ public class AcadmyDbContext :
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Reaction> Reactions { get; set; }
     public DbSet<UserReport> UserReports { get; set; }
-
+    public DbSet<CourseCertificate> CourseCertificates { get; set; }
     public AcadmyDbContext(DbContextOptions<AcadmyDbContext> options)
         : base(options)
     {

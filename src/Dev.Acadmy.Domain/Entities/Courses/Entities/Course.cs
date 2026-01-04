@@ -46,6 +46,7 @@ namespace Dev.Acadmy.Entities.Courses.Entities
         public IdentityUser User { get; set; }
         [ForeignKey(nameof(SubjectId))]
         public Subject? Subject { get; set; }
+        public CourseCertificate? CourseCertificate { get; set; }
         public ICollection<Exam> Exams { get; set; } = new List<Exam>();
         public ICollection<Chapter>  Chapters { get; set; } = new List<Chapter>();
         public ICollection<CourseInfo> CourseInfos { get; set; } = new List<CourseInfo>();
