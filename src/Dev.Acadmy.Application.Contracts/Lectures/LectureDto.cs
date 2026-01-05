@@ -10,8 +10,12 @@ namespace Dev.Acadmy.Lectures
         public string Content { get; set; }
         public bool HasYouTubeVideo { get; set; }
         public bool HasDriveVideo { get; set; }
+        public bool HasTelegramVideo { get; set; }
+        public string? TelegramVideoUrl { get; set; }
+
         public string? YouTubeVideoUrl { get; set; }
         public string? DriveVideoUrl { get; set; }
+        
         public Guid ChapterId { get; set; }
         public Guid CourseId { get; set; }
         public string CourseName { get; set; }

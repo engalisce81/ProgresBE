@@ -1,6 +1,7 @@
 ﻿using Dev.Acadmy.EntityFrameworkCore;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Quizzes;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,16 @@ namespace Dev.Acadmy.Repositories
         public QuizRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider)
         {
+        }
+        public async Task<Quiz> GetQuizWithQuestionsAsync(Guid quizId)
+        {
+            return await (await GetQueryableAsync())
+                .Include(q => q.Questions)
+                    .ThenInclude(q => q.QuestionAnswers)
+                .Include(q => q.Questions)
+                    .ThenInclude(q => q.QuestionType)
+                .Include(q => q.Lecture) // ستحتاجها لجلب عدد المحاولات (QuizTryCount)
+                .FirstOrDefaultAsync(q => q.Id == quizId);
         }
     }
 }
