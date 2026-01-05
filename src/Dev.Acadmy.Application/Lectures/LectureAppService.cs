@@ -1,8 +1,12 @@
-﻿using Dev.Acadmy.Permissions;
+﻿using Dev.Acadmy.Interfaces;
+using Dev.Acadmy.Permissions;
+using Dev.Acadmy.Questions;
 using Dev.Acadmy.Quizzes;
 using Dev.Acadmy.Response;
 using Microsoft.AspNetCore.Authorization;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -13,8 +17,10 @@ namespace Dev.Acadmy.Lectures
     {
         private readonly LectureManager _lectureManager;
         private readonly QuizManager _quizManager;
-        public LectureAppService(QuizManager quizManager, LectureManager lectureManager)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        public LectureAppService(IMediaItemRepository mediaItemRepository, QuizManager quizManager, LectureManager lectureManager)
         {
+            _mediaItemRepository = mediaItemRepository;
             _quizManager = quizManager;
             _lectureManager = lectureManager;
         }
@@ -29,12 +35,44 @@ namespace Dev.Acadmy.Lectures
         [Authorize(AcadmyPermissions.Lectures.Delete)]
         public async Task DeleteAsync(Guid id) => await _lectureManager.DeleteAsync(id);
         [Authorize]
-        public async Task<ResponseApi<QuizDetailsDto>> GetQuizDetailsAsync(Guid quizId) => await _lectureManager.GetQuizDetailsAsync(quizId);
+        public async Task<ResponseApi<QuizDetailsDto>> GetQuizDetailsAsync(Guid refId, bool isExam)
+        {
+            // 1. استدعاء المانجر للحصول على بيانات الدومين الخام
+            var quizDetailModel = await _quizManager.GetFullDetailsAsync(refId, isExam);
+
+            // 2. جلب الصور (Cross-cutting concern يفضل بقاؤه في الـ Application Layer)
+            var questionIds = quizDetailModel.Questions.Select(q => q.Id).ToList();
+            var imagesDict = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(questionIds);
+
+            // 3. Mapping إلى DTO
+            var dto = new QuizDetailsDto
+            {
+                QuizId = quizDetailModel.Id,
+                Title = quizDetailModel.Title,
+                QuizTime = quizDetailModel.QuizTime,
+                QuizTryCount = quizDetailModel.TryCount,
+                Questions = quizDetailModel.Questions.Select(q => new QuestionDetailesDto
+                {
+                    QuestionId = q.Id,
+                    Title = q.Title,
+                    Score = q.Score,
+                    LogoUrl = imagesDict.GetValueOrDefault(q.Id) ?? string.Empty,
+                    QuestionType = q.QuestionType?.Name ?? string.Empty,
+                    QuestionTypeKey = q.QuestionType?.Key ?? 0,
+                    Answers = q.QuestionAnswers.Select(a => new QuestionAnswerDetailesDto
+                    {
+                        AnswerId = a.Id,
+                        Answer = a.Answer,
+                        IsCorrect = a.IsCorrect
+                    }).ToList()
+                }).ToList()
+            };
+
+            return new ResponseApi<QuizDetailsDto> { Data = dto, Success = true, Message = "Retrieved successfully" };
+        }
         [Authorize]
-        public async Task<ResponseApi<QuizResultDto>> CorrectQuizAsync(QuizAnswerDto input) => await _quizManager.SubmitQuizAsync(input);
-        [Authorize]
-        public async Task<ResponseApi<QuizStudentDto>> MarkQuizAsync(Guid quizId, int score) => await _quizManager.MarkQuizAsync(quizId, score);
-        [Authorize]
+        public async Task<ResponseApi<QuizResultDto>> CorrectQuizAsync(QuizAnswerDto input,bool isExam) => await _quizManager.SubmitQuizAsync(input, isExam);
+         [Authorize]
         public async Task<ResponseApi<LectureWithQuizzesDto>> GetLectureWithQuizzesAsync(Guid refId , bool isCourse) => await _lectureManager.GetLectureWithQuizzesAsync(refId , isCourse);
         
         // this in fuature i will take to admin panel

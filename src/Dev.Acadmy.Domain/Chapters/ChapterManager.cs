@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
 using Dev.Acadmy.MediaItems;
@@ -8,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
@@ -20,7 +20,6 @@ namespace Dev.Acadmy.Chapters
 {
     public class ChapterManager:DomainService
     {
-        private readonly IRepository<Chapter> _chapterRepository;
         private readonly LectureManager _lectureManger;
         private readonly IMapper _mapper;
         private readonly IIdentityUserRepository _userRepository;
@@ -31,8 +30,13 @@ namespace Dev.Acadmy.Chapters
         private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
         private readonly IRepository<Entities.Courses.Entities.Course , Guid> _courseRepository;
         private readonly IdentityUserManager _userManager;
-        public ChapterManager(IdentityUserManager userManager, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IRepository<Chapter> chapterRepository)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        private readonly IRepository<IdentityUser, Guid> _userRepo;
+        private readonly IChapterRepository _chapterRepository;
+        public ChapterManager(IRepository<IdentityUser, Guid> userRepo, IMediaItemRepository mediaItemRepository, IdentityUserManager userManager, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IChapterRepository chapterRepository)
         {
+            _userRepo = userRepo;
+            _mediaItemRepository = mediaItemRepository;
             _userManager = userManager;
             _courseRepository = courseRepository;
             _lectureTryRepository = lectureTryRepository;
@@ -131,158 +135,6 @@ namespace Dev.Acadmy.Chapters
             var chapterDtos = _mapper.Map<List<LookupDto>>(chapters);
             return new PagedResultDto<LookupDto>(chapterDtos.Count, chapterDtos);
         }
-
-
-
-
-        public async Task<PagedResultDto<CourseChaptersDto>> GetCourseChaptersAsync(Guid courseId, int pageNumber, int pageSize)
-        {
-            if (pageNumber <= 0) pageNumber = 1;
-            if (pageSize <= 0) pageSize = 10;
-
-            var userId = _currentUser.GetId();
-
-            // ✅ كل إجابات المستخدم (لكل كويز)
-            var userQuizAttempts = await (await _quizStudentRepository.GetQueryableAsync())
-                .Where(qs => qs.UserId == userId)
-                .Select(qs => new { qs.QuizId, qs.TryCount, qs.LectureId })
-                .ToListAsync();
-
-            // ✅ كل محاولات المستخدم على المحاضرات
-            var lectureTries = await (await _lectureTryRepository.GetQueryableAsync())
-                .Where(lt => lt.UserId == userId)
-                .ToListAsync();
-
-            var queryable = await _chapterRepository.GetQueryableAsync();
-            var query = queryable
-                .Include(x => x.Course)
-                .Include(c => c.Lectures)
-                    .ThenInclude(l => l.Quizzes)
-                        .ThenInclude(q => q.Questions)
-                .Where(c => c.CourseId == courseId);
-
-            var totalCount = await query.CountAsync();
-            var chapters = await query
-                .OrderBy(c => c.CreationTime)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            var chapterInfoDtos = new List<CourseChaptersDto>();
-
-            foreach (var c in chapters)
-            {
-                var lectureDtos = new List<LectureInfoDto>();
-
-                foreach (var l in c.Lectures.Where(x => x.IsVisible))
-                {
-                    var media = await _mediaItemManager.GetAsync(l.Id);
-
-                    var lectureTry = lectureTries.FirstOrDefault(x => x.LectureId == l.Id)
-                        ?? new LectureTry
-                        {
-                            LectureId = l.Id,
-                            UserId = userId,
-                            MyTryCount = 0
-                        };
-
-                    // كل الكويزات بالترتيب
-                    var quizzes = l.Quizzes.OrderBy(q => q.CreationTime).ToList();
-
-                    QuizInfoDto quizDto;
-
-                    if (quizzes.Any())
-                    {
-                        int currentQuizIndex = 0;
-
-                        // 🔥 نحدد أول كويز لسه الطالب ما خلصش محاولاته فيه
-                        for (int i = 0; i < quizzes.Count; i++)
-                        {
-                            var quiz = quizzes[i];
-                            var userQuiz = userQuizAttempts.FirstOrDefault(q => q.QuizId == quiz.Id);
-
-                            int usedTries = userQuiz?.TryCount ?? 0;
-                            if (usedTries < quiz.QuizTryCount)
-                            {
-                                currentQuizIndex = i;
-                                break;
-                            }
-
-                            // لو الطالب خلص كل المحاولات، ننتقل للكويز التالي
-                            if (i == quizzes.Count - 1)
-                                currentQuizIndex = quizzes.Count - 1; // آخر كويز
-                        }
-
-                        var nextQuiz = quizzes[currentQuizIndex];
-                        var trys = await _lectureManger.UserTryCount(userId,l.Id, nextQuiz.Id);   
-                        quizDto = new QuizInfoDto
-                        {
-                            QuizId = nextQuiz.Id,
-                            Title = nextQuiz.Title,
-                            QuestionsCount = nextQuiz.Questions.Count,
-                            QuizTryCount = trys?.Data?.LectureTryCount??0,
-                            TryedCount = trys?.Data?.MyTryCount??0,
-                            IsSucces = trys?.Data?.IsSucces?? false,
-                            AlreadyAnswer = userQuizAttempts.Any(q => q.LectureId == l.Id)
-                        };
-                    }
-                    else
-                    {
-                        quizDto = new QuizInfoDto
-                        {
-                            QuizId = Guid.Empty,
-                            Title = "لا يوجد كويز متاح",
-                            QuestionsCount = 0,
-                            QuizTryCount = 0,
-                            TryedCount = 0,
-                            AlreadyAnswer = false
-                        };
-                    }
-
-                    lectureDtos.Add(new LectureInfoDto
-                    {
-                        LectureId = l.Id,
-                        Title = l.Title,
-                        Content = l.Content,
-                        DriveVideoUrl= l.DriveVideoUrl,
-                        YouTubeVideoUrl = l.YouTubeVideoUrl,
-                        HasDriveVideo = l.HasDriveVideo,
-                        HasYouTubeVideo = l.HasYouTubeVideo,
-                        Quiz = quizDto,
-                        IsQuizRequired = l.IsRequiredQuiz,
-                    });
-
-                    foreach (var dto in lectureDtos)
-                    {
-                        var lecPdfs = await _mediaItemManager.GetListAsync(l.Id);
-                        foreach (var pdf in lecPdfs)
-                            if (!pdf.IsImage) dto.PdfUrls.Add(pdf.Url);
-                    }
-                }
-
-                var creatorCourse = await _userRepository.GetAsync(c.Course.UserId);
-                var mediaItemUser = await _mediaItemManager.GetAsync(creatorCourse.Id);
-
-                chapterInfoDtos.Add(new CourseChaptersDto
-                {
-                    CourseId = c.CourseId,
-                    CourseName = c.Course.Name,
-                    ChapterId = c.Id,
-                    ChapterName = c.Name,
-                    UserId = creatorCourse.Id,
-                    UserName = creatorCourse.Name,
-                    LogoUrl = mediaItemUser?.Url ?? string.Empty,
-                    LectureCount = lectureDtos.Count,
-                    Lectures = lectureDtos
-                });
-            }
-
-            return new PagedResultDto<CourseChaptersDto>(totalCount, chapterInfoDtos);
-        }
-
-
-
-
 
         public async Task<PagedResultDto<LookupDto>> GetChaptersByCourseLookUpAsync(Guid courseId)
         {

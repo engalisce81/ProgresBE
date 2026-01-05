@@ -20,6 +20,7 @@ namespace Dev.Acadmy.Lectures
         public bool IsFree { get; set; }
         public bool IsRequiredQuiz { get; set; }
         public int SuccessQuizRate { get; set; }
+        public string? TelegramVideoUrl { get; set; }
         public ICollection<string> PdfUrls { get; set; } = new List<string>();
 
     }
