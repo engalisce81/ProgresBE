@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.3.0" />
+    <PackageReference Include="VideoLibrary" Version="3.3.0" />
     <PackageReference Include="Volo.Abp.Emailing" Version="9.1.2" />
     <PackageReference Include="Volo.Abp.Identity.Domain" Version="9.1.2" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="9.1.2" />
@@ -28,6 +29,7 @@
     <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="9.1.2" />
     <PackageReference Include="Volo.Abp.OpenIddict.Domain" Version="9.1.2" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.OpenIddict" Version="9.1.2" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.6" />
   </ItemGroup>
 
 </Project>

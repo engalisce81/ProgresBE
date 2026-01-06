@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dev.Acadmy.Dtos.Response.YoutubeQualities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,5 +46,6 @@ namespace Dev.Acadmy.Courses
         public int ChapterCount { get; set; }
         public int LectureCount { get; set; }
         public int SubscriberCount { get; set; }
+        public YoutubeVideoResultDto YoutubeVideoResultDto { get; set; }
     }
 }

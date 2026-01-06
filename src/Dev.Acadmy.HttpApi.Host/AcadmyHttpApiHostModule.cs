@@ -102,7 +102,11 @@ public class AcadmyHttpApiHostModule : AbpModule
         
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
-        ConfigureAuthentication(context);
+        context.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+        {
+            options.Limits.MaxRequestLineSize = 65536; // 64 KB لخط الطلب (URL)
+            options.Limits.MaxRequestHeadersTotalSize = 65536; // 64 KB للهيدرز
+        }); ConfigureAuthentication(context);
         ConfigureBundles();
         ConfigureUrls(configuration);
         ConfigureConventionalControllers();
