@@ -9,10 +9,12 @@ using Dev.Acadmy.Dtos.Response.Advertisementes;
 using Dev.Acadmy.Dtos.Response.Chats;
 using Dev.Acadmy.Dtos.Response.Courses;
 using Dev.Acadmy.Dtos.Response.Posts;
+using Dev.Acadmy.Dtos.Response.YoutubeQualities;
 using Dev.Acadmy.Entities.Advertisementes.Entities;
 using Dev.Acadmy.Entities.Chats.Entites;
 using Dev.Acadmy.Entities.Courses.Entities;
 using Dev.Acadmy.Entities.Posts.Entities;
+using Dev.Acadmy.Entities.YoutubeQualities.Entities;
 using Dev.Acadmy.Exams;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
@@ -136,8 +138,9 @@ public class AcadmyApplicationAutoMapperProfile : Profile
         CreateMap<Comment, CommentDto>();
         CreateMap<CreateUpdateCommentDto, Comment>();
 
-       
 
+        CreateMap<YoutubeVideoResult, YoutubeVideoResultDto>();
+        CreateMap<YoutubeQuality, YoutubeQualityDto>();
 
 
         CreateMap<LookupDto, QuestionBank>().ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name)); ;
