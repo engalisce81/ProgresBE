@@ -28,7 +28,7 @@ namespace Dev.Acadmy.Repositories
                 .Include(c => c.User)
                 .Include(x => x.Subject)
                 .Include(x => x.CourseInfos)
-                .Include(c => c.College)
+                .Include(c => c.College).ThenInclude(u=>u.University)
                 .Include(c => c.Chapters)
                     .ThenInclude(ch => ch.Lectures) 
                 .Include(c => c.Feedbacks)
