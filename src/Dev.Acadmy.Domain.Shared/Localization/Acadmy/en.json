@@ -1,7 +1,7 @@
 {
   "culture": "en",
   "texts": {
-    "AppName": "Acadmy",
+    "AppName": "Progress",
     "Menu:Home": "Home",
     "Welcome": "Welcome",
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
@@ -17,6 +17,9 @@
     "Feedback:UpdatedSuccessfully": "Feedback updated successfully",
     "Feedback:DeletedSuccessfully": "Feedback deleted successfully",
     "Feedback:StatusChanged": "Acceptance status updated successfully",
-    "Feedback:NotAllowed": "You don't have permission for this action"
+    "Feedback:NotAllowed": "You don't have permission for this action",
+    "Exam:Wait24Hours": "You have already requested a certificate. You can request it again after {NextDate}.",
+    "Exam:NotPassedYet": "Sorry, you must pass the exam first to be able to issue a certificate.",
+    "Exam:NotFound": "No record found for this exam."
   }
 }

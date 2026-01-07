@@ -20,63 +20,57 @@ namespace Dev.Acadmy.Chapters
 {
     public class ChapterManager:DomainService
     {
-        //private readonly LectureManager _lectureManger;
-        //private readonly IMapper _mapper;
-        //private readonly IIdentityUserRepository _userRepository;
-        //private readonly ICurrentUser _currentUser;
-        //private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
-        //private readonly MediaItemManager _mediaItemManager;
-        //private readonly IRepository<LectureStudent ,Guid> _lectureStudentRepository;
-        //private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
-        //private readonly IRepository<Entities.Courses.Entities.Course , Guid> _courseRepository;
-        //private readonly IdentityUserManager _userManager;
-        //private readonly IMediaItemRepository _mediaItemRepository;
-        //private readonly IRepository<IdentityUser, Guid> _userRepo;
-        //private readonly IChapterRepository _chapterRepository;
-        //public ChapterManager(IRepository<IdentityUser, Guid> userRepo, IMediaItemRepository mediaItemRepository, IdentityUserManager userManager, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManger, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IChapterRepository chapterRepository)
+        private readonly LectureManager _lectureManager;
+        private readonly IMapper _mapper;
+        private readonly IIdentityUserRepository _userRepository;
+        private readonly ICurrentUser _currentUser;
+        private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
+        private readonly MediaItemManager _mediaItemManager;
+        private readonly IRepository<LectureStudent, Guid> _lectureStudentRepository;
+        private readonly IRepository<LectureTry, Guid> _lectureTryRepository;
+        private readonly IRepository<Entities.Courses.Entities.Course, Guid> _courseRepository;
+        private readonly IdentityUserManager _userManager;
+        private readonly IMediaItemRepository _mediaItemRepository;
+        private readonly IRepository<IdentityUser, Guid> _userRepo;
+        private readonly IChapterRepository _chapterRepository;
+        public ChapterManager(IRepository<IdentityUser, Guid> userRepo, IMediaItemRepository mediaItemRepository, IdentityUserManager userManager, IRepository<Entities.Courses.Entities.Course, Guid> courseRepository, IRepository<LectureTry, Guid> lectureTryRepository, LectureManager lectureManager, IRepository<LectureStudent, Guid> lectureStudentRepository, MediaItemManager mediaItemManager, IRepository<QuizStudent, Guid> quizStudentRepository, ICurrentUser currentUser, IIdentityUserRepository userRepository, IMapper mapper, IChapterRepository chapterRepository)
+        {
+            _userRepo = userRepo;
+            _mediaItemRepository = mediaItemRepository;
+            _userManager = userManager;
+            _courseRepository = courseRepository;
+            _lectureTryRepository = lectureTryRepository;
+            _lectureManager = lectureManager;
+            _lectureStudentRepository = lectureStudentRepository;
+            _mediaItemManager = mediaItemManager;
+            _quizStudentRepository = quizStudentRepository;
+            _currentUser = currentUser;
+            _userRepository = userRepository;
+            _chapterRepository = chapterRepository;
+            _mapper = mapper;
+        }
+
+        //protected IChapterRepository _chapterRepository => LazyServiceProvider.LazyGetRequiredService<IChapterRepository>();
+        //protected IMediaItemRepository _mediaItemRepository => LazyServiceProvider.LazyGetRequiredService<IMediaItemRepository>();
+        //protected IdentityUserManager _userManager => LazyServiceProvider.LazyGetRequiredService<IdentityUserManager>();
+
+        //protected IRepository<Entities.Courses.Entities.Course, Guid> _courseRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<Entities.Courses.Entities.Course, Guid>>();
+        //protected IRepository<LectureTry, Guid> _lectureTryRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<LectureTry, Guid>>();
+        //protected LectureManager _lectureManager => LazyServiceProvider.LazyGetRequiredService<LectureManager>();
+        //protected IRepository<LectureStudent, Guid> _lectureStudentRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<LectureStudent, Guid>>();
+        //protected MediaItemManager _mediaItemManager => LazyServiceProvider.LazyGetRequiredService<MediaItemManager>();
+        //protected IRepository<QuizStudent, Guid> _quizStudentRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<QuizStudent, Guid>>();
+        //protected ICurrentUser _currentUser => LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
+        //protected IIdentityUserRepository _userRepository => LazyServiceProvider.LazyGetRequiredService<IIdentityUserRepository>();
+        //protected IRepository<IdentityUser, Guid> _identityUserRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<IdentityUser, Guid>>();
+        //protected IMapper _mapper => LazyServiceProvider.LazyGetRequiredService<IMapper>();
+
+        //public ChapterManager()
         //{
-        //    _userRepo = userRepo;
-        //    _mediaItemRepository = mediaItemRepository;
-        //    _userManager = userManager;
-        //    _courseRepository = courseRepository;
-        //    _lectureTryRepository = lectureTryRepository;
-        //    _lectureManger = lectureManger;
-        //    _lectureStudentRepository = lectureStudentRepository;
-        //    _mediaItemManager = mediaItemManager;
-        //    _quizStudentRepository = quizStudentRepository;
-        //    _currentUser = currentUser;
-        //    _userRepository = userRepository;
-        //    _chapterRepository = chapterRepository;
-        //    _mapper = mapper;
+        //    // Constructor فارغ - التبعيات يتم حلها عند أول استخدام (On-demand)
         //}
 
-        protected IChapterRepository _chapterRepository => LazyServiceProvider.LazyGetRequiredService<IChapterRepository>();
-        protected IMediaItemRepository _mediaItemRepository => LazyServiceProvider.LazyGetRequiredService<IMediaItemRepository>();
-        protected IdentityUserManager _userManager => LazyServiceProvider.LazyGetRequiredService<IdentityUserManager>();
 
-        protected IRepository<Entities.Courses.Entities.Course, Guid> _courseRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<Entities.Courses.Entities.Course, Guid>>();
-        protected IRepository<LectureTry, Guid> _lectureTryRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<LectureTry, Guid>>();
-        protected LectureManager _lectureManager => LazyServiceProvider.LazyGetRequiredService<LectureManager>();
-        protected IRepository<LectureStudent, Guid> _lectureStudentRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<LectureStudent, Guid>>();
-        protected MediaItemManager _mediaItemManager => LazyServiceProvider.LazyGetRequiredService<MediaItemManager>();
-        protected IRepository<QuizStudent, Guid> _quizStudentRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<QuizStudent, Guid>>();
-        protected ICurrentUser _currentUser => LazyServiceProvider.LazyGetRequiredService<ICurrentUser>();
-        protected IIdentityUserRepository _userRepository => LazyServiceProvider.LazyGetRequiredService<IIdentityUserRepository>();
-        protected IRepository<IdentityUser, Guid> _identityUserRepository => LazyServiceProvider.LazyGetRequiredService<IRepository<IdentityUser, Guid>>();
-        protected IMapper _mapper => LazyServiceProvider.LazyGetRequiredService<IMapper>();
-
-        public ChapterManager()
-        {
-            // Constructor فارغ - التبعيات يتم حلها عند أول استخدام (On-demand)
-        }
-
-        public async Task<ResponseApi<ChapterDto>> GetAsync(Guid id)
-        {
-            var chapter = await _chapterRepository.FirstOrDefaultAsync(x => x.Id == id);
-            if (chapter == null) return new ResponseApi<ChapterDto> { Data = null, Success = false, Message = "Not found chapter" };
-            var dto = _mapper.Map<ChapterDto>(chapter);
-            return new ResponseApi<ChapterDto> { Data = dto, Success = true, Message = "find succeess" };
-        }
 
         public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid courseId)
         {

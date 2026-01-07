@@ -1,7 +1,7 @@
 {
   "culture": "ar",
   "texts": {
-    "AppName": "Acadmy",
+    "AppName": "Progress",
     "Menu:Home": "الصفحة الرئيسية",
     "Welcome": "مرحباً",
     "LongWelcomeMessage": "مرحبا بكم في التطبيق. هذا مشروع بدء تشغيل يعتمد على إطار عمل ABP. لمزيد من المعلومات ، يرجى زيارة abp.io.",
@@ -17,6 +17,9 @@
     "Feedback:UpdatedSuccessfully": "تم تحديث التقييم بنجاح",
     "Feedback:DeletedSuccessfully": "تم حذف التقييم بنجاح",
     "Feedback:StatusChanged": "تم تحديث حالة القبول بنجاح",
-    "Feedback:NotAllowed": "ليس لديك صلاحية للقيام بهذا الإجراء"
+    "Feedback:NotAllowed": "ليس لديك صلاحية للقيام بهذا الإجراء",
+    "Exam:Wait24Hours": "لقد طلبت الشهادة مسبقاً، لا يمكنك طلبها مرة أخرى قبل {NextDate}.",
+    "Exam:NotPassedYet": "عذراً، يجب عليك اجتياز الامتحان أولاً لتتمكن من استخراج الشهادة.",
+    "Exam:NotFound": "لم يتم العثور على سجل لهذا الامتحان."
   }
 }

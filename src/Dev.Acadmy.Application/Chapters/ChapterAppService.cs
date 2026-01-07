@@ -1,6 +1,8 @@
-﻿using Dev.Acadmy.Interfaces;
+﻿using AutoMapper;
+using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
+using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Quizzes;
 using Dev.Acadmy.Response;
@@ -13,27 +15,27 @@ using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
 
 namespace Dev.Acadmy.Chapters
 {
-    public class ChapterAppService : ApplicationService, IChapterAppService
+    public class ChapterAppService : ApplicationService
     {
         private readonly ChapterManager _chapterManager;
-        private readonly LectureManager _lectureManager; 
+        private readonly LectureManager _lectureManager;
         private readonly IMediaItemRepository _mediaItemRepository;
         private readonly IChapterRepository _chapterRepository;
         private readonly ICurrentUser _currentUser;
         private readonly IRepository<IdentityUser, Guid> _userRepository;
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
-
+        private readonly IMapper _mapper;
         public ChapterAppService(
-        ChapterManager chapterManager,
+            IMapper mapper,
+            ChapterManager chapterManager,
             LectureManager lectureManager,
-            IMediaItemRepository mediaItemRepository,
             IChapterRepository chapterRepository,
+            IMediaItemRepository mediaItemRepository,
             ICurrentUser currentUser,
             IRepository<IdentityUser, Guid> userRepository,
             IRepository<QuizStudent, Guid> quizStudentRepository)
@@ -45,11 +47,54 @@ namespace Dev.Acadmy.Chapters
             _currentUser = currentUser;
             _userRepository = userRepository;
             _quizStudentRepository = quizStudentRepository;
+            _mapper = mapper;
         }
         [Authorize(AcadmyPermissions.Chapters.View)]
-        public async Task<ResponseApi<ChapterDto>> GetAsync(Guid id) => await _chapterManager.GetAsync(id);
+        public async Task<ResponseApi<ChapterDto>> GetAsync(Guid id)
+        {
+            var chapter = await _chapterRepository.FirstOrDefaultAsync(x => x.Id == id);
+            if (chapter == null) return new ResponseApi<ChapterDto> { Data = null, Success = false, Message = "Not found chapter" };
+            var dto = _mapper.Map<ChapterDto>(chapter);
+            return new ResponseApi<ChapterDto> { Data = dto, Success = true, Message = "find succeess" };
+        }
         [Authorize(AcadmyPermissions.Chapters.View)]
-        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid courseId) => await _chapterManager.GetListAsync(pageNumber, pageSize, search,courseId);
+        public async Task<PagedResultDto<ChapterDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid courseId)
+        {
+            var skipCount = (pageNumber - 1) * pageSize;
+            var currentUserId = _currentUser.GetId();
+
+            // 1. إنشاء الاستعلام الأساسي مع Include و فلترة الكورس الإلزامية
+            var queryable = (await _chapterRepository.GetQueryableAsync())
+                .Include(x => x.Course)
+                .Where(x => x.CourseId == courseId); // استخدام الـ courseId الممرر
+
+            // 2. فلترة البحث (إذا وُجد)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                queryable = queryable.Where(c => c.Name.Contains(search) || c.Course.Name.Contains(search));
+            }
+            // 3. منطق الصلاحيات: إذا لم يكن أدمن، يرى فقط ما أنشأه
+            var isAdmin = CurrentUser.IsInRole(RoleConsts.Admin.ToLower());
+            if (!isAdmin)
+            {
+                queryable = queryable.Where(c => c.CreatorId == currentUserId);
+            }
+
+            // 4. حساب العدد الإجمالي للنتائج المفلترة
+            var totalCount = await AsyncExecuter.CountAsync(queryable);
+
+            // 5. جلب البيانات بطلب واحد مرتب ومقسم لصفحات
+            var chapters = await AsyncExecuter.ToListAsync(
+                queryable.OrderByDescending(c => c.CreationTime)
+                         .Skip(skipCount)
+                         .Take(pageSize)
+            );
+
+            // 6. التحويل لـ DTO
+            var chapterDtos = _mapper.Map<List<ChapterDto>>(chapters);
+
+            return new PagedResultDto<ChapterDto>(totalCount, chapterDtos);
+        }
         [Authorize(AcadmyPermissions.Chapters.Create)]
         public async Task<ResponseApi<ChapterDto>> CreateAsync(CreateUpdateChapterDto input) => await _chapterManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Chapters.Edit)]

@@ -40,7 +40,8 @@ using Volo.Abp.MailKit;
 using Volo.Abp.Emailing;
 using Volo.Abp.Settings;
 using Dev.Acadmy.Chats;
-using Volo.Abp.AspNetCore.SignalR; // هذا مصدر AbpSmtpEmailSenderOptions
+using Volo.Abp.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Http; // هذا مصدر AbpSmtpEmailSenderOptions
 
 namespace Dev.Acadmy;
 
@@ -264,7 +265,14 @@ public class AcadmyHttpApiHostModule : AbpModule
         app.UseStaticFiles(new StaticFileOptions
         {
             FileProvider = new PhysicalFileProvider(imagesRootPath),
-            RequestPath = "/images"
+            RequestPath = "/images",
+            OnPrepareResponse = ctx =>
+            {
+                // السماح لجميع النطاقات بالوصول للقراءة (General)
+                ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+                ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+                ctx.Context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            }
         });
         if (env.IsDevelopment())
         {

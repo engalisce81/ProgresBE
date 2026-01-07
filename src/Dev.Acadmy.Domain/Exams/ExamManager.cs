@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Questions;
 using Dev.Acadmy.Response;
@@ -27,8 +28,10 @@ namespace Dev.Acadmy.Exams
         private readonly IRepository<ExamQuestionBank, Guid> _examQuestionBankRepository;
         private readonly IRepository<ExamQuestion, Guid> _examQuestionRepository;
         private readonly MediaItemManager _mediaItemManager;
-        public ExamManager(MediaItemManager mediaItemManager, IRepository<ExamQuestion, Guid> examQuestionRepository, IRepository<ExamQuestionBank, Guid> examQuestionBankRepository, ICurrentUser currentUser , IIdentityUserRepository userRepository, IRepository<QuestionBank, Guid> questionBankRepository, IMapper mapper, IRepository<Exam,Guid> examRepository , IRepository<Question, Guid> questionRepository)
+        private readonly IMediaItemRepository _mediaItemRepository;
+        public ExamManager(IMediaItemRepository mediaItemRepository, MediaItemManager mediaItemManager, IRepository<ExamQuestion, Guid> examQuestionRepository, IRepository<ExamQuestionBank, Guid> examQuestionBankRepository, ICurrentUser currentUser , IIdentityUserRepository userRepository, IRepository<QuestionBank, Guid> questionBankRepository, IMapper mapper, IRepository<Exam,Guid> examRepository , IRepository<Question, Guid> questionRepository)
         {
+            _mediaItemRepository = mediaItemRepository;
             _mediaItemManager = mediaItemManager;
             _examQuestionRepository = examQuestionRepository;
             _examQuestionBankRepository = examQuestionBankRepository;
@@ -51,7 +54,7 @@ namespace Dev.Acadmy.Exams
         }
 
 
-        public async Task<PagedResultDto<ExamDto>> GetListAsync(int pageNumber, int pageSize, string? search)
+        public async Task<PagedResultDto<ExamDto>> GetListAsync(int pageNumber, int pageSize, string? search,Guid courseId)
         {
             var roles = await _userRepository.GetRolesAsync(_currentUser.GetId());
             var queryable = await _examRepository.GetQueryableAsync();
@@ -95,52 +98,72 @@ namespace Dev.Acadmy.Exams
         }
 
 
-        public async Task<PagedResultDto<ExamQuestionsDto>> GetQuestionsFromBankAsync(List<Guid> bankIds, Guid examId)
+        public async Task<PagedResultDto<ExamQuestionsDto>> GetQuestionsFromBankAsync(List<Guid> bankIds, Guid? examId)
         {
-            // ✅ تحميل بنوك الأسئلة مع الأسئلة والإجابات وأنواع الأسئلة
-            var banksQuery = await _questionBankRepository.GetQueryableAsync();
-            var banks = await banksQuery
-                .Where(x => bankIds.Contains(x.Id))
-                .Include(x => x.Questions)
-                    .ThenInclude(q => q.QuestionType)
-                .Include(x => x.Questions)
-                    .ThenInclude(q => q.QuestionAnswers)
-                .ToListAsync();
+            var queryableQuestions = await _questionRepository.GetQueryableAsync();
+            List<Question> finalQuestionsList;
 
-            var questions = new List<ExamQuestionsDto>();
-
-            // ✅ تحميل الأسئلة المرتبطة بالامتحان مرة واحدة (بدلاً من استعلام داخل اللوب)
-            var examQuestionIds = await (await _examQuestionRepository.GetQueryableAsync())
-                .Where(x => x.ExamId == examId)
-                .Select(x => x.QuestionId)
-                .ToListAsync();
-
-            foreach (var bank in banks)
+            // 1. تحديد قائمة الأسئلة الأساسية
+            if (bankIds != null && bankIds.Any())
             {
-                foreach (var question in bank.Questions)
-                {
-                    var examQuestion = new ExamQuestionsDto
-                    {
-                        Id = question.Id,
-                        Tittle = question.Title,
-                        QuestionType = question?.QuestionType?.Name??string.Empty,
-                        logoUrl = _mediaItemManager.GetAsync(question.Id).Result?.Url??string.Empty,
-                        // ✅ التأكد إذا كانت السؤال مرتبط بالامتحان
-                        IsSelected = examQuestionIds.Contains(question.Id),
-                        QuestionAnswers = question.QuestionAnswers.Select(qa => new ExamQuestionAnswerDto
-                        {
-                            AnswerId = qa.Id,
-                            Answer = qa.Answer,
-                            IsSelected = qa.IsCorrect
-                        }).ToList()
-                    };
+                // لو مبعوث بنوك.. هات الأسئلة اللي جواها
+                finalQuestionsList = await queryableQuestions
+                    .Include(q => q.QuestionType)
+                    .Include(q => q.QuestionAnswers)
+                    .Where(q => bankIds.Contains((Guid)q.QuestionBankId))
+                    .ToListAsync();
+            }
+            else if (examId.HasValue)
+            {
+                // لو البنوك فاضية بس فيه امتحان.. هات أسئلة الامتحان بس
+                var examQuestionIds = await (await _examQuestionRepository.GetQueryableAsync())
+                    .Where(x => x.ExamId == examId.Value)
+                    .Select(x => x.QuestionId)
+                    .ToListAsync();
 
-                    questions.Add(examQuestion);
-                }
+                finalQuestionsList = await queryableQuestions
+                    .Include(q => q.QuestionType)
+                    .Include(q => q.QuestionAnswers)
+                    .Where(q => examQuestionIds.Contains(q.Id))
+                    .ToListAsync();
+            }
+            else
+            {
+                // لو الاتنين فاضيين رجع قائمة فاضية أو تصرف حسب منطق البزنس عندك
+                return new PagedResultDto<ExamQuestionsDto>(0, new List<ExamQuestionsDto>());
             }
 
-            // ✅ ترجيع النتيجة داخل PagedResultDto (بدون pagination حالياً، يمكنك إضافته لاحقاً)
-            return new PagedResultDto<ExamQuestionsDto>(questions.Count, questions);
+            // 2. جلب الأسئلة المختارة في الامتحان (لو الـ ExamId موجود)
+            var selectedQuestionIds = new List<Guid>();
+            if (examId.HasValue)
+            {
+                selectedQuestionIds = await (await _examQuestionRepository.GetQueryableAsync())
+                    .Where(x => x.ExamId == examId.Value)
+                    .Select(x => x.QuestionId)
+                    .ToListAsync();
+            }
+
+            // 3. جلب الميديا دفعة واحدة (Batch)
+            var allQuestionIds = finalQuestionsList.Select(x => x.Id).ToList();
+            var mediaDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(allQuestionIds);
+
+            // 4. تحويل لـ DTO
+            var dtos = finalQuestionsList.Select(question => new ExamQuestionsDto
+            {
+                Id = question.Id,
+                Tittle = question.Title,
+                QuestionType = question.QuestionType?.Name ?? string.Empty,
+                logoUrl = mediaDic.GetValueOrDefault(question.Id) ?? string.Empty,
+                IsSelected = selectedQuestionIds.Contains(question.Id), // هتكون true لو السؤال في الامتحان
+                QuestionAnswers = question.QuestionAnswers.Select(qa => new ExamQuestionAnswerDto
+                {
+                    AnswerId = qa.Id,
+                    Answer = qa.Answer,
+                    IsSelected = qa.IsCorrect
+                }).ToList()
+            }).ToList();
+
+            return new PagedResultDto<ExamQuestionsDto>(dtos.Count, dtos);
         }
 
         public async Task AddQuestionToExam(CreateUpdateExamQuestionDto input)
