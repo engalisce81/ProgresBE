@@ -11,9 +11,11 @@ namespace Dev.Acadmy.Entities.Chats.Entites
 {
     public class ChatMessage : AuditedEntity<Guid>
     {
-        public Guid ReceverId { get; set; } // المعرف الخاص بالجروب (الكورس)
+        public Guid ReceverId { get; set; } // المعرف الخاص بالجروب (الكورس) أو المستخدم
         public string Message { get; set; }
         public Guid SenderId { get; set; }
-       
+
+        // الحقول الجديدة
+        public bool IsSenderInstructor { get; set; }   // هل المرسل مدرب؟
     }
 }

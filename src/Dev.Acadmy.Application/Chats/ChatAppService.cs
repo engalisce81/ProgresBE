@@ -1,21 +1,17 @@
-﻿using System;
+﻿using Dev.Acadmy.Dtos.Request.Chats;
+using Dev.Acadmy.Dtos.Response.Chats;
+using Dev.Acadmy.Entities.Chats.Entites;
+using Dev.Acadmy.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Dev.Acadmy.Entities.Chats.Entites;
+using Volo.Abp.Identity;
 using Volo.Abp.Users;
-using Microsoft.AspNetCore.Authorization;
-using Volo.Abp.EventBus.Local;
-using Dev.Acadmy.Dtos.Request.Chats;
-using Volo.Abp.Application.Dtos;
-using Dev.Acadmy.Dtos.Response.Chats;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using Dev.Acadmy.Interfaces;
-using Microsoft.AspNetCore.SignalR;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
-using Volo.Abp;
 
 namespace Dev.Acadmy.Chats
 {
@@ -23,62 +19,59 @@ namespace Dev.Acadmy.Chats
     {
         private readonly IRepository<ChatMessage, Guid> _chatRepo;
         private readonly IMediaItemRepository _mediaItemRepository;
-        private readonly ILocalEventBus _localEventBus;
-        //private readonly IHubContext<ChatHub> _hubContext;
-        //private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IdentityUserManager _userManager; // تأكد من الاسم الصحيح
+        private readonly IRepository<IdentityUser, Guid> _userRepository;
 
         public ChatAppService(
             IRepository<ChatMessage, Guid> chatRepo,
             IMediaItemRepository mediaItemRepository,
-            ILocalEventBus localEventBus)
+            IdentityUserManager userManager,
+            IRepository<IdentityUser, Guid> userRepository)
         {
             _chatRepo = chatRepo;
             _mediaItemRepository = mediaItemRepository;
-            _localEventBus = localEventBus;
-            //_hubContext = hubContext;
-            //_httpContextAccessor = httpContextAccessor;
+            _userManager = userManager;
+            _userRepository = userRepository;
         }
 
         [Authorize]
         public async Task<ChatMessageDto> SendMessageAsync(CreateUpdateChatMessageDto input)
         {
             var senderId = CurrentUser.GetId();
-            var senderName = CurrentUser.Name ?? CurrentUser.UserName;
 
-            // 1. حفظ في قاعدة البيانات
+            // 1. تحديد هل المرسل Instructor (من الـ Token مباشرة للأداء)
+            var isSenderInstructor = CurrentUser.IsInRole(RoleConsts.Teacher.ToLower());
+
+            // 3. حفظ الرسالة في قاعدة البيانات
             var chatMsg = new ChatMessage
             {
                 ReceverId = input.ReceverId,
                 SenderId = senderId,
                 Message = input.Message,
+                IsSenderInstructor = isSenderInstructor,
             };
             await _chatRepo.InsertAsync(chatMsg);
 
-            // 2. جلب صورة المرسل
+            // 4. جلب صورة المرسل
             var mediaItemSender = await _mediaItemRepository.FirstOrDefaultAsync(x => x.RefId == senderId);
 
-            // 3. تجهيز الـ DTO ووضعه في List (طلب مبرمج الفلاتر)
+            // 5. تجهيز الـ DTO
             var messageDto = new ChatMessageDto
             {
                 Id = chatMsg.Id,
                 SenderId = senderId,
-                SenderName = senderName,
+                SenderName = CurrentUser?.Name ?? CurrentUser?.UserName??string.Empty,
                 ReceverId = input.ReceverId,
                 Message = input.Message,
-                CreationTime = chatMsg.CreationTime,
-                LogoUrl = mediaItemSender?.Url ?? string.Empty
+                CreationTime = DateTime.Now,
+                LogoUrl = mediaItemSender?.Url ?? string.Empty,
+                IsInstructor = isSenderInstructor // مبرمج الفلاتر سيعتمد على هذه لتغيير شكل الفقاعة
             };
 
-            var messageList = new List<ChatMessageDto> { messageDto };
+            // 6. النشر عبر الـ Local Event Bus (مفيد للـ Real-time أو الـ Notifications)
+           // await _localEventBus.PublishAsync(messageDto);
+
             return messageDto;
-
-            //// 4. الحل الحقيقي للـ Real-Time: إرسال عبر SignalR
-            //// نرسلها لغرفة الـ Recever (سواء كان شخص أو كورس)
-            //await _hubContext.Clients.Group(input.ReceverId.ToString())
-            //    .SendAsync("ReceiveMessage", messageList);
-
-            //// 5. (اختياري) استمر في استخدام الـ EventBus إذا كان لديك Handlers أخرى في السيرفر
-            //await _localEventBus.PublishAsync(messageDto);
         }
 
         /// <summary>
@@ -111,9 +104,6 @@ namespace Dev.Acadmy.Chats
             };
             return messageDto;
 
-            // إرسال الـ DTO المحدث للطرفين (المرسل والمستقبل)
-            // await _chatHubContext.Clients.Users(chatMsg.SenderId.ToString(), chatMsg.ReceverId.ToString())
-            //                      .SendAsync("MessageUpdated", messageDto);
         }
 
         [Authorize]
@@ -138,7 +128,6 @@ namespace Dev.Acadmy.Chats
 
             // جلب الرسائل
             var messages = await query
-                .OrderByDescending(x => x.CreationTime)
                 .Skip(skipCount)
                 .Take(pageSize)
                 .ToListAsync();
@@ -157,6 +146,7 @@ namespace Dev.Acadmy.Chats
                 Message = x.Message,
                 CreationTime = x.CreationTime,
                 ReceverId = x.ReceverId,
+                IsInstructor=x.IsSenderInstructor,
                 // هنا الحل: نبحث في القاموس عن الـ Url باستخدام الـ SenderId
                 LogoUrl = mediItemDic.ContainsKey(x.SenderId) ? mediItemDic[x.SenderId] : string.Empty
             }).ToList();

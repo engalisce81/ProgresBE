@@ -1,4 +1,5 @@
-﻿using Dev.Acadmy.Dtos.Response.Exams;
+﻿using AutoMapper;
+using Dev.Acadmy.Dtos.Response.Exams;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Interfaces.Dev.Acadmy.Exams;
 using Dev.Acadmy.Permissions;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
@@ -28,6 +30,7 @@ namespace Dev.Acadmy.Exams
         private readonly IExamStudentAnswerRepository _examStudentAnswerRepository;
         private readonly IdentityUserManager _userManager; // للتحقق من دور الأدمن
         private readonly IRepository<IdentityUser, Guid> _userRepository;
+        private readonly IMapper _mapper;
 
         public ExamAppService(
             ExamManager examManager,
@@ -37,7 +40,8 @@ namespace Dev.Acadmy.Exams
             IExamStudentRepository examStudentRepository,
             IExamStudentAnswerRepository examStudentAnswerRepository,
             IdentityUserManager userManager,
-            IRepository<IdentityUser, Guid> userRepository          )
+            IRepository<IdentityUser, Guid> userRepository,
+            IMapper mapper)
         {
             _examManager = examManager;
             _currentUser = currentUser;
@@ -47,11 +51,46 @@ namespace Dev.Acadmy.Exams
             _examStudentAnswerRepository = examStudentAnswerRepository;
             _userManager = userManager;
             _userRepository = userRepository;
+            _mapper = mapper;
         }
         [Authorize(AcadmyPermissions.Exams.View)]
         public async Task<ResponseApi<ExamDto>> GetAsync(Guid id) => await _examManager.GetAsync(id);
         [Authorize(AcadmyPermissions.Exams.View)]
-        public async Task<PagedResultDto<ExamDto>> GetListAsync(int pageNumber, int pageSize, string? search) => await _examManager.GetListAsync(pageNumber, pageSize, search);
+        public async Task<PagedResultDto<ExamDto>> GetListAsync(int pageNumber, int pageSize, string? search, Guid courseId)
+        {
+            // 1. تجهيز الـ Queryable الأساسي مع الـ Include المطلوب
+            var queryable = (await _examRepository.GetQueryableAsync())
+                .Include(x => x.Course)
+                .Where(x => x.CourseId == courseId); // استخدام البارامتر المرسل
+
+            // 2. تطبيق الفلترة بالبحث (Search)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                queryable = queryable.Where(c => c.Name.Contains(search) || c.Course.Name.Contains(search));
+            }
+
+            // 3. تطبيق الفلترة بناءً على الصلاحيات (Authorization Filter)
+            // ملاحظة: الأفضل استخدام CurrentUser.IsInRole بدلاً من جلب الأدوار يدوياً للأداء
+            if (!CurrentUser.IsInRole(RoleConsts.Admin.ToLower()))
+            {
+                queryable = queryable.Where(c => c.CreatorId == CurrentUser.GetId());
+            }
+
+            // 4. حساب العدد الإجمالي قبل الـ Pagination
+            var totalCount = await AsyncExecuter.CountAsync(queryable);
+
+            // 5. جلب البيانات مع الـ Pagination والترتيب
+            var exams = await AsyncExecuter.ToListAsync(
+                queryable.OrderByDescending(c => c.CreationTime) // الترتيب بالتاريخ عادة أفضل للامتحانات
+                         .Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize)
+            );
+
+            // 6. المابينج والإرجاع
+            var examDtos = _mapper.Map<List<ExamDto>>(exams);
+
+            return new PagedResultDto<ExamDto>(totalCount, examDtos);
+        }
         [Authorize(AcadmyPermissions.Exams.Create)]
         public async Task<ResponseApi<ExamDto>> CreateAsync(CreateUpdateExamDto input) => await _examManager.CreateAsync(input);
         [Authorize(AcadmyPermissions.Exams.Edit)]
@@ -130,6 +169,24 @@ namespace Dev.Acadmy.Exams
             };
 
             return new ResponseApi<ExamStudentResultDto> { Data = result, Success = true };
+        }
+        [Authorize]
+        public async Task<ExamStudentStatusDto> GetExamStudentStatusAsync(Guid examId)
+        {
+            var userId = CurrentUser.GetId(); // الحصول على الـ UserId من الـ Session
+            var examStudent = await _examStudentRepository.FirstOrDefaultAsync(x =>
+                x.ExamId == examId && x.UserId == userId);
+
+            if (examStudent == null) throw new EntityNotFoundException();
+
+            return new ExamStudentStatusDto
+            {
+                IsPassed = examStudent.IsPassed,
+                Score = examStudent.Score,
+                IsCertificateIssued = examStudent.IsCertificateIssued,
+                CanRequestNow = examStudent.CanRequestCertificate(),
+                NextAvailableDate = examStudent.LastCertificateRequestDate?.AddDays(1)
+            };
         }
     }
 }

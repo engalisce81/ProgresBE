@@ -4,6 +4,7 @@ using Dev.Acadmy.Entities.Courses.Managers;
 using Dev.Acadmy.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ namespace Dev.Acadmy.Courses
         public async Task<IRemoteStreamContent> DownloadCertificateAsync(Guid courseId)
         {
             // 1. جلب بيانات الشهادة
-            var cert = await _courseCertificateRepository.GetAsync(c => c.CourseId == courseId);
+            var cert = await (await _courseCertificateRepository.GetQueryableAsync()).Include(x=>x.Course).FirstOrDefaultAsync(c => c.CourseId == courseId);
 
             // 2. جلب اسم الطالب الحالي من الـ Session
             var studentName = $"{CurrentUser.Name}";
@@ -65,10 +66,16 @@ namespace Dev.Acadmy.Courses
                 cert.NameYPosition
             );
 
-            // 4. إرجاع الملف كـ Stream ليتم تحميله في المتصفح
+            // 4. الحل لعمل Download مباشر:
+            var fileName = $"Certificate_{cert.Course.Name}.pdf";
+            var memoryStream = new MemoryStream(pdfBytes);
+
+            // إضافة الهيدر في الـ Response (اختياري للتأكيد في بعض المتصفحات)
+            // HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename={fileName}");
+
             return new RemoteStreamContent(
-                new MemoryStream(pdfBytes),
-                fileName: $"Certificate_{courseId}.pdf",
+                memoryStream,
+                fileName: fileName,
                 contentType: "application/pdf"
             );
         }

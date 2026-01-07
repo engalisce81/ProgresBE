@@ -1,6 +1,8 @@
-﻿using Dev.Acadmy.Interfaces;
+﻿using AutoMapper;
+using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
+using Dev.Acadmy.MediaItems;
 using Dev.Acadmy.Permissions;
 using Dev.Acadmy.Quizzes;
 using Dev.Acadmy.Response;
@@ -22,13 +24,12 @@ namespace Dev.Acadmy.Chapters
     public class ChapterAppService : ApplicationService, IChapterAppService
     {
         private readonly ChapterManager _chapterManager;
-        private readonly LectureManager _lectureManager; 
+        private readonly LectureManager _lectureManager;
         private readonly IMediaItemRepository _mediaItemRepository;
         private readonly IChapterRepository _chapterRepository;
         private readonly ICurrentUser _currentUser;
         private readonly IRepository<IdentityUser, Guid> _userRepository;
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
-
         public ChapterAppService(
         ChapterManager chapterManager,
             LectureManager lectureManager,
