@@ -592,61 +592,76 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             if (pageNumber <= 0) pageNumber = 1;
             if (pageSize <= 0) pageSize = 10;
 
-            // ✅ نجيب كل المحاضرات داخل الكورس
-            var lecturesQuery = await (await _lectureRepository.GetQueryableAsync())
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionAnswers)
-                .Include(l => l.Quizzes)
-                    .ThenInclude(q => q.Questions)
-                        .ThenInclude(qq => qq.QuestionType)
-                .Include(l => l.Chapter)
-                .Where(l => l.Chapter.CourseId == courseId)
-                .ToListAsync();
-
-            // ✅ نجيب كل الكويزات اللي الطالب جاوبها
-            var answeredQuizIds = await (await _quizStudentRepository.GetQueryableAsync())
+            // 1. جلب سجلات تسليم الطالب للكويزات مع إجاباته التفصيلية
+            var studentSubmissions = await (await _quizStudentRepository.GetQueryableAsync())
+                .Include(qs => qs.Answers) // جلب جدول QuizStudentAnswer
                 .Where(qs => qs.UserId == userId)
-                .Select(qs => qs.QuizId)
                 .ToListAsync();
 
-            // ✅ نجيب فقط المحاضرات اللي فيها كويزات جاوبها الطالب
-            var filteredLectures = lecturesQuery
-                .Where(l => l.Quizzes.Any(q => answeredQuizIds.Contains(q.Id)))
+            var answeredQuizIds = studentSubmissions.Select(qs => qs.QuizId).ToList();
+
+            // 2. جلب المحاضرات التي تحتوي على هذه الكويزات فقط
+            var query = await _lectureRepository.GetQueryableAsync();
+
+            var filteredLecturesQuery = query
+                .Include(l => l.Chapter)
+                .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionAnswers)
+                .Include(l => l.Quizzes).ThenInclude(q => q.Questions).ThenInclude(qq => qq.QuestionType)
+                .Where(l => l.Chapter.CourseId == courseId && l.Quizzes.Any(q => answeredQuizIds.Contains(q.Id)));
+
+            var totalCount = await filteredLecturesQuery.CountAsync();
+
+            var pagedLectures = await filteredLecturesQuery
                 .OrderByDescending(l => l.CreationTime)
-                .ToList();
-
-            var totalCount = filteredLectures.Count;
-
-            var pagedLectures = filteredLectures
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
+            // 3. عملية الـ Mapping ودمج البيانات
             var resultDtos = pagedLectures.Select(lecture => new LectureWithQuizzesDto
             {
                 Id = lecture.Id,
                 Title = lecture.Title,
                 Quizzes = lecture.Quizzes
-                    .Where(q => answeredQuizIds.Contains(q.Id))
-                    .Select(q => new QuizWithQuestionsDto
+                    .Where(q => answeredQuizIds.Contains(q.Id)) // عرض الكويزات المحلولة فقط
+                    .Select(q =>
                     {
-                        Id = q.Id,
-                        Title = q.Title,
-                        Questions = q.Questions.Select(ques => new QuestionWithAnswersDto
+                        // البحث عن محاولة الطالب لهذا الكويز
+                        var submission = studentSubmissions.FirstOrDefault(s => s.QuizId == q.Id);
+
+                        return new QuizWithQuestionsDto
                         {
-                            Id = ques.Id,
-                            Title = ques.Title,
-                            Score = ques.Score,
-                            QuestionTypeId = ques.QuestionTypeId,
-                            QuestionTypeName = ques.QuestionType?.Name ?? "",
-                            Answers = ques.QuestionAnswers.Select(ans => new QuestionAnswerPanelDto
+                            Id = q.Id,
+                            Title = q.Title,
+                            Questions = q.Questions.Select(ques =>
                             {
-                                Id = ans.Id,
-                                Answer = ans.Answer,
-                                IsCorrect = ans.IsCorrect
+                                // البحث عن إجابة الطالب على هذا السؤال تحديداً
+                                var studentResponse = submission?.Answers.FirstOrDefault(a => a.QuestionId == ques.Id);
+
+                                return new QuestionWithAnswersDto
+                                {
+                                    Id = ques.Id,
+                                    Title = ques.Title,
+                                    Score = ques.Score,
+                                    QuestionTypeId = ques.QuestionTypeId,
+                                    QuestionTypeName = ques.QuestionType?.Name ?? "",
+
+                                    // بيانات إجابة الطالب
+                                    StudentTextAnswer = studentResponse?.TextAnswer?? string.Empty,
+                                    IsStudentAnswerCorrect = studentResponse?.IsCorrect ?? false,
+                                    ScoreObtained = studentResponse?.ScoreObtained ?? 0,
+
+                                    // دمج خيارات السؤال مع تحديد ما اختاره الطالب (للأسئلة الاختيارية)
+                                    Answers = ques.QuestionAnswers.Select(ans => new QuestionAnswerPanelDto
+                                    {
+                                        Id = ans.Id,
+                                        Answer = ans.Answer,
+                                        IsCorrect = ans.IsCorrect, // الحل النموذجي
+                                        IsSelectedByStudent = studentResponse?.SelectedAnswerId == ans.Id // هل هذا هو خيار الطالب؟
+                                    }).ToList()
+                                };
                             }).ToList()
-                        }).ToList()
+                        };
                     }).ToList()
             }).ToList();
 

@@ -15,5 +15,9 @@ namespace Dev.Acadmy.Questions
         public string QuestionTypeName { get; set; } 
         public string LogoUrl { get; set; }
         public List<QuestionAnswerPanelDto> Answers { get; set; } = new();
+        // حقول إجابة الطالب
+        public string StudentTextAnswer { get; set; } // إذا كان السؤال مقالي
+        public bool IsStudentAnswerCorrect { get; set; } // هل إجابة الطالب صحيحة (تقييم النظام)
+        public double ScoreObtained { get; set; } // الدرجة التي حصل عليها الطالب
     }
 }
