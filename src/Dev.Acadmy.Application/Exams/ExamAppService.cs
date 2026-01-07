@@ -237,7 +237,7 @@ namespace Dev.Acadmy.Exams
                 // دمج الاسم واللقب بشكل صحيح
                 FullName = $"{x.User.Name} {x.User.Surname}".Trim(), 
                 // سحب الرابط من القاموس بناءً على UserId، وإذا لم يوجد نضع صورة افتراضية
-                LogoUrl = mediaItemDic.TryGetValue(x.UserId, out var url) ? url : "/assets/images/default-avatar.png",
+                LogoUrl = mediaItemDic.TryGetValue(x.UserId, out var url) ? url : string.Empty,
                 Score = x.Score,
                 TryCount = x.TryCount,
                 IsPassed = x.IsPassed,
