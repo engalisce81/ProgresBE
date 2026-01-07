@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
@@ -31,7 +32,7 @@ namespace Dev.Acadmy.Exams
         private readonly IdentityUserManager _userManager; // للتحقق من دور الأدمن
         private readonly IRepository<IdentityUser, Guid> _userRepository;
         private readonly IMapper _mapper;
-
+        private readonly IMediaItemRepository _mediaItemRepository;
         public ExamAppService(
             ExamManager examManager,
             ICurrentUser currentUser,
@@ -41,7 +42,8 @@ namespace Dev.Acadmy.Exams
             IExamStudentAnswerRepository examStudentAnswerRepository,
             IdentityUserManager userManager,
             IRepository<IdentityUser, Guid> userRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IMediaItemRepository mediaItemRepository)
         {
             _examManager = examManager;
             _currentUser = currentUser;
@@ -52,6 +54,7 @@ namespace Dev.Acadmy.Exams
             _userManager = userManager;
             _userRepository = userRepository;
             _mapper = mapper;
+            _mediaItemRepository = mediaItemRepository;
         }
         [Authorize(AcadmyPermissions.Exams.View)]
         public async Task<ResponseApi<ExamDto>> GetAsync(Guid id) => await _examManager.GetAsync(id);
@@ -188,6 +191,61 @@ namespace Dev.Acadmy.Exams
                 CanRequestNow = examStudent.CanRequestCertificate(),
                 NextAvailableDate = examStudent.LastCertificateRequestDate?.AddDays(1)
             };
+        }
+
+        [Authorize]
+        public async Task<PagedResultDto<ExamStudentDto>> GetExamParticipantsAsync(int pageNumber, int pageSize, string? search, Guid examId)
+        {
+            // 1. الوصول إلى Queryable من المستودع مع تضمين البيانات المرتبطة
+            var studentQuery = await _examStudentRepository.GetQueryableAsync();
+    
+            // استخدام Include لجلب بيانات المستخدم والامتحان في استعلام واحد (Eager Loading)
+            var query = studentQuery
+                .Include(x => x.User)
+                .Include(x => x.Exam)
+                .Where(x => x.ExamId == examId);
+
+            // 2. فلتر البحث (Search Filter)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var lowerSearch = search.ToLower();
+                query = query.Where(x =>
+                    x.User.Name.ToLower().Contains(lowerSearch) ||
+                    x.User.Surname.ToLower().Contains(lowerSearch) ||
+                    x.User.UserName.ToLower().Contains(lowerSearch));
+            }
+
+            // 3. حساب العدد الإجمالي (Total Count)
+            var totalCount = await AsyncExecuter.CountAsync(query);
+
+            // 4. التقسيم لصفحات والترتيب (يفضل الترتيب دائماً عند استخدام Paging)
+            var skipCount = (pageNumber - 1) * pageSize;
+            var list = await AsyncExecuter.ToListAsync(
+                query.OrderByDescending(x => x.FinishedAt) // ترتيب تنازلي حسب وقت الانتهاء
+                     .PageBy(skipCount, pageSize)
+            );
+
+            // 5. جلب روابط الصور باستخدام Dictionary
+            var userIds = list.Select(x => x.UserId).ToList();
+            var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(userIds);
+
+            // 6. التحويل إلى DTO (Mapping)
+            var dtos = list.Select(x => new ExamStudentDto
+            {
+                ExamId = x.ExamId,
+                UserId = x.UserId,
+                // دمج الاسم واللقب بشكل صحيح
+                FullName = $"{x.User.Name} {x.User.Surname}".Trim(), 
+                // سحب الرابط من القاموس بناءً على UserId، وإذا لم يوجد نضع صورة افتراضية
+                LogoUrl = mediaItemDic.TryGetValue(x.UserId, out var url) ? url : "/assets/images/default-avatar.png",
+                Score = x.Score,
+                TryCount = x.TryCount,
+                IsPassed = x.IsPassed,
+                FinishedAt = x.FinishedAt,
+                IsCertificateIssued = x.IsCertificateIssued
+            }).ToList();
+
+            return new PagedResultDto<ExamStudentDto>(totalCount, dtos);
         }
     }
 }
