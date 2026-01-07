@@ -181,6 +181,7 @@ namespace Dev.Acadmy.Exams
 
             return new ExamStudentStatusDto
             {
+                ExamId = examStudent.ExamId,
                 IsPassed = examStudent.IsPassed,
                 Score = examStudent.Score,
                 IsCertificateIssued = examStudent.IsCertificateIssued,

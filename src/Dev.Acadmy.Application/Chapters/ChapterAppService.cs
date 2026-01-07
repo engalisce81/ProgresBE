@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Dev.Acadmy.Exams;
 using Dev.Acadmy.Interfaces;
 using Dev.Acadmy.Lectures;
 using Dev.Acadmy.LookUp;
@@ -30,8 +31,10 @@ namespace Dev.Acadmy.Chapters
         private readonly IRepository<IdentityUser, Guid> _userRepository;
         private readonly IRepository<QuizStudent, Guid> _quizStudentRepository;
         private readonly IMapper _mapper;
+        private readonly IRepository<Exam,Guid> _examRepository;
         public ChapterAppService(
             IMapper mapper,
+            IRepository<Exam, Guid> examRepository,
             ChapterManager chapterManager,
             LectureManager lectureManager,
             IChapterRepository chapterRepository,
@@ -40,6 +43,7 @@ namespace Dev.Acadmy.Chapters
             IRepository<IdentityUser, Guid> userRepository,
             IRepository<QuizStudent, Guid> quizStudentRepository)
         {
+            _examRepository = examRepository;
             _chapterManager = chapterManager;
             _lectureManager = lectureManager;
             _mediaItemRepository = mediaItemRepository;
@@ -148,12 +152,13 @@ namespace Dev.Acadmy.Chapters
             var userLogosDict = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(creatorIds);
             var users = await _userRepository.GetListAsync(u => creatorIds.Contains(u.Id));
             var lecturesStatusDict = await _lectureManager.GetLecturesStatusAsync(userId, allLectureIds, lectureToActiveQuizMap.Values.ToList());
-
+            var exam = await _examRepository.FirstOrDefaultAsync(x=>x.CourseId == courseId);
             // E. بناء النتيجة النهائية (Mapping)
             var chapterInfoDtos = chapters.Select(c => new CourseChaptersDto
             {
                 CourseId = c.CourseId,
                 CourseName = c.Course.Name,
+                ExamId = exam?.Id?? null,
                 ChapterId = c.Id,
                 ChapterName = c.Name,
                 UserId = c.Course.UserId,
