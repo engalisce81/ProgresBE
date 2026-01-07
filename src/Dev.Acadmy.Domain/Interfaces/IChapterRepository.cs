@@ -8,9 +8,8 @@ using Volo.Abp.Domain.Repositories;
 
 namespace Dev.Acadmy.Interfaces
 {
-    public interface IChapterRepository : IRepository<Chapter, Guid>
+    public interface IChapterRepository :IRepository<Chapter, Guid>
     {
-        // ميثود مخصصة لجلب البيانات المطلوبة للصفحة الحالية
-        Task<(List<Chapter> Items, int TotalCount)> GetPagedChaptersWithDetailsAsync(Guid courseId,int skipCount,int maxResultCount);
+        Task<(List<Chapter> Items, int TotalCount)> GetPagedChaptersWithDetailsAsync(Guid courseId, int skipCount, int maxResultCount);
     }
 }

@@ -83,15 +83,23 @@ namespace Dev.Acadmy.Courses
         [Authorize]
         public async Task<CourseCertificateDto> GetByCourseIdAsync(Guid courseId)
         {
-            var cert = await _courseCertificateRepository.FirstOrDefaultAsync(x=>x.CourseId == courseId);
+            var cert = await _courseCertificateRepository.FirstOrDefaultAsync(x => x.CourseId == courseId);
+
+            // إذا لم يتم العثور على الشهادة، ارجع أوبجكت فاضي
+            if (cert == null)
+            {
+                return new CourseCertificateDto();
+            }
+
             var mediaItem = await _mediaItemRepository.FirstOrDefaultAsync(x => x.RefId == cert.Id);
+
             return new CourseCertificateDto
             {
                 Id = cert.Id,
                 CourseId = cert.CourseId,
                 NameXPosition = cert.NameXPosition,
                 NameYPosition = cert.NameYPosition,
-                TemplateUrl = mediaItem != null ? mediaItem.Url : string.Empty
+                TemplateUrl = mediaItem?.Url ?? string.Empty
             };
         }
     }

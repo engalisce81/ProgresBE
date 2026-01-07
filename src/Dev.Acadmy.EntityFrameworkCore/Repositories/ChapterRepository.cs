@@ -5,16 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
 
 namespace Dev.Acadmy.Repositories
 {
-    public class ChapterRepositry : EfCoreRepository<AcadmyDbContext, Chapter, Guid>, IChapterRepository
+    public class ChapterRepository : EfCoreRepository<AcadmyDbContext, Chapter, Guid>, IChapterRepository
     {
-        public ChapterRepositry(IDbContextProvider<AcadmyDbContext> dbContextProvider)
+        public ChapterRepository(IDbContextProvider<AcadmyDbContext> dbContextProvider)
             : base(dbContextProvider) { }
 
         public async Task<(List<Chapter> Items, int TotalCount)> GetPagedChaptersWithDetailsAsync(
