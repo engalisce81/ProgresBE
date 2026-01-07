@@ -193,7 +193,7 @@ namespace Dev.Acadmy.Exams
             };
         }
 
-        [Authorize]
+        [Authorize(AcadmyPermissions.Exams.View)]
         public async Task<PagedResultDto<ExamStudentDto>> GetExamParticipantsAsync(int pageNumber, int pageSize, string? search, Guid examId)
         {
             // 1. الوصول إلى Queryable من المستودع مع تضمين البيانات المرتبطة
