@@ -64,7 +64,7 @@ namespace Dev.Acadmy.Repositories
             var totalCount = await query.LongCountAsync();
 
             // 2. جلب البيانات مع الـ Includes والـ Pagination
-            var items = await query.Include(x => x.College)
+            var items = await query.Include(x => x.College).ThenInclude(x=>x.University)
                                    .Include(x => x.Exams)
                                    .Include(x => x.User)
                                    .Include(x=>x.Chapters).ThenInclude(x=>x.Lectures)
