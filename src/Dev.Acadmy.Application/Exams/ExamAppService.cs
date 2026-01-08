@@ -181,16 +181,27 @@ namespace Dev.Acadmy.Exams
             var examStudent = await _examStudentRepository.FirstOrDefaultAsync(x =>
                 x.ExamId == examId && x.UserId == userId);
 
-if (examStudent == null)
-    {
-        return new ResponseApi<ExamStudentStatusDto>
-        {
-            Success = false,
-            Message = "No exam record found for this student.",
-            Data = null
-        };
-    }
-            // بناء الـ DTO
+            if (examStudent == null)
+                {
+                var statusNullDto = new ExamStudentStatusDto
+                {
+                    ExamId = examId,
+                    IsPassed = false,
+                    Score = 0,
+                    IsCertificateIssued = false,
+                    CanRequestNow = false,
+                    NextAvailableDate = null,
+                    FinishedAt = null,
+                };
+
+                return new ResponseApi<ExamStudentStatusDto>
+                    {
+                        Success = false,
+                        Message = "No exam record found for this student.",
+                        Data = statusNullDto
+                };
+                }
+                        // بناء الـ DTO
             var statusDto = new ExamStudentStatusDto
             {
                 ExamId = examStudent.ExamId,

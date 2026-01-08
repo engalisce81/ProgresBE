@@ -10,6 +10,6 @@ namespace Dev.Acadmy.Dtos.Response.Exams
         public bool IsCertificateIssued { get; set; }
         public bool CanRequestNow { get; set; }
         public DateTime? NextAvailableDate { get; set; }
-        public DateTime FinishedAt { get; set; }
+        public DateTime? FinishedAt { get; set; }
     }
 }
