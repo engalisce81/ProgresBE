@@ -172,7 +172,6 @@ namespace Dev.Acadmy.Lectures
             var lecture = await _lectureRepository.FirstOrDefaultAsync(x => x.Id == id);
             if (lecture == null) return new ResponseApi<bool> { Data = false, Success = false, Message = "Not found lecture" };
             await _mediaItemManager.DeleteAsync(id);
-            await _quizManager.DeletQuizesByLectureId(id);
             await _lectureStudentRepository.DeleteManyAsync( await (await _lectureStudentRepository.GetQueryableAsync()).Where(x => x.LectureId == id).ToListAsync());
             await _lectureRepository.DeleteAsync(lecture);
             return new ResponseApi<bool> { Data = true, Success = true, Message = "delete succeess" };

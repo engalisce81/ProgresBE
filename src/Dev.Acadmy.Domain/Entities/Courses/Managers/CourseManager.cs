@@ -111,8 +111,6 @@ namespace Dev.Acadmy.Entities.Courses.Managers
             if (course == null) return new ResponseApi<bool> { Data = false, Success = false, Message = "Not found Course" };
             var courseStudent =await (await _courseStudentRepository.GetQueryableAsync()).Where(x=>x.CourseId == course.Id).ToListAsync();
             if (courseStudent != null) await _courseStudentRepository.DeleteManyAsync(courseStudent);
-           // var questionBank = await _questionBankManager.GetByCourse(id);
-           // if (questionBank != null) await _questionBankManager.DeleteAsync(questionBank.Id);
             var chapterIds = course.Chapters.Select(x => x.Id).ToList();
             if (chapterIds.Any()) foreach (var chapter in chapterIds) await _chapterManager.DeleteAsync(chapter);
             var infos = course.CourseInfos.Select(x => x.Id);
@@ -198,6 +196,7 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 .Include(c => c.User)
                 .Include(c => c.College)
                 .Include(c => c.Chapters)
+                .Include(f=>f.Feedbacks)
                 .OrderByDescending(c => c.CreationTime)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -236,6 +235,9 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                 HasDriveVideo=course.HasDriveVideo, 
                 IsQuiz = course.IsQuiz,
                 ShowSubscriberCount = course.ShowSubscriberCount,
+                Rating = course.Feedbacks != null && course.Feedbacks.Any(x => x.IsAccept)
+                     ? Math.Round(course.Feedbacks.Where(x => x.IsAccept).Average(x => x.Rating), 1)
+                     : 0,
             }).ToList();
 
             return new PagedResultDto<CourseInfoHomeDto>(totalCount, courseDtos);

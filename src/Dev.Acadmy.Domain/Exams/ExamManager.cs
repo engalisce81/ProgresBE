@@ -168,32 +168,71 @@ namespace Dev.Acadmy.Exams
 
         public async Task AddQuestionToExam(CreateUpdateExamQuestionDto input)
         {
-            var examBanks = await (await _examQuestionBankRepository.GetQueryableAsync()).Where(x => input.QuestionBankIds.Contains(x.QuestionBankId) && x.ExamId == input.ExamId).ToListAsync();
-            var examQuestions = await (await _examQuestionRepository.GetQueryableAsync()).Where(x => input.QuestionIds.Contains(x.QuestionId) && x.ExamId == input.ExamId).ToListAsync();
-            if (examBanks.Any()) await _examQuestionBankRepository.DeleteManyAsync(examBanks);
-            if (examQuestions.Any()) await _examQuestionRepository.DeleteManyAsync(examQuestions);
-            foreach (var bankId in input.QuestionBankIds)
+            // --- أولاً: التعامل مع الأسئلة (ExamQuestions) ---
+
+            // 1. جلب جميع الارتباطات الحالية لهذا الامتحان من الجدول الوسيط
+            var currentQuestions = await (await _examQuestionRepository.GetQueryableAsync())
+                .Where(x => x.ExamId == input.ExamId)
+                .ToListAsync();
+
+            // 2. تحديد الارتباطات التي يجب حذفها (الموجودة في القاعدة وليست في القائمة المرسلة)
+            var questionsToDelete = currentQuestions
+                .Where(x => !input.QuestionIds.Contains(x.QuestionId))
+                .ToList();
+
+            if (questionsToDelete.Any())
             {
-                var examQuestionBank = new ExamQuestionBank
-                {
-                    ExamId = input.ExamId,
-                    QuestionBankId = bankId
-                };
-                await _examQuestionBankRepository.InsertAsync(examQuestionBank ,autoSave:true);
+                await _examQuestionRepository.DeleteManyAsync(questionsToDelete);
             }
-            foreach (var questionId in input.QuestionIds)
+
+            // 3. تحديد الأسئلة الجديدة التي يجب إضافتها (المرسلة وليست موجودة مسبقاً)
+            var existingQuestionIds = currentQuestions.Select(x => x.QuestionId).ToList();
+            var newQuestionIds = input.QuestionIds.Except(existingQuestionIds).ToList();
+
+            if (newQuestionIds.Any())
             {
-                var examQuestion = new ExamQuestion
+                var newEntries = newQuestionIds.Select(qId => new ExamQuestion
                 {
                     ExamId = input.ExamId,
-                    QuestionId = questionId
-                };
-                await _examQuestionRepository.InsertAsync(examQuestion ,autoSave:true);
+                    QuestionId = qId
+                }).ToList();
+
+                await _examQuestionRepository.InsertManyAsync(newEntries, autoSave: true);
+            }
+
+
+            // --- ثانياً: التعامل مع بنوك الأسئلة (ExamQuestionBanks) ---
+
+            // 1. جلب الارتباطات الحالية لبنوك الأسئلة
+            var currentBanks = await (await _examQuestionBankRepository.GetQueryableAsync())
+                .Where(x => x.ExamId == input.ExamId)
+                .ToListAsync();
+
+            // 2. تحديد البنوك التي يجب حذف ارتباطها
+            var banksToDelete = currentBanks
+                .Where(x => !input.QuestionBankIds.Contains(x.QuestionBankId))
+                .ToList();
+
+            if (banksToDelete.Any())
+            {
+                await _examQuestionBankRepository.DeleteManyAsync(banksToDelete);
+            }
+
+            // 3. تحديد البنوك الجديدة للإضافة
+            var existingBankIds = currentBanks.Select(x => x.QuestionBankId).ToList();
+            var newBankIds = input.QuestionBankIds.Except(existingBankIds).ToList();
+
+            if (newBankIds.Any())
+            {
+                var newBankEntries = newBankIds.Select(bId => new ExamQuestionBank
+                {
+                    ExamId = input.ExamId,
+                    QuestionBankId = bId
+                }).ToList();
+
+                await _examQuestionBankRepository.InsertManyAsync(newBankEntries, autoSave: true);
             }
         }
-        
 
-        
-        
     }
 }

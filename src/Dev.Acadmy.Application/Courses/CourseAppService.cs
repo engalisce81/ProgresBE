@@ -74,8 +74,7 @@ namespace Dev.Acadmy.Courses
         public async Task<PagedResultDto<CourseDto>> GetListAsync(int pageNumber, int pageSize, string? search, CourseType type)
         {
             var roles = await _userRepository.GetRoleNamesAsync(_currentUser.GetId());
-            var (items, totalCount) = await _courseManager.GetListAsync((pageNumber - 1) * pageSize, pageSize, search, type, _currentUser.GetId(), roles.Any(r => r.ToUpper() == RoleConsts.Admin.ToUpper()));
-
+            var (items, totalCount) = await _courseRepository.GetListWithDetailsAsync((pageNumber - 1) * pageSize, pageSize, search, type, _currentUser.GetId(), roles.Any(r => r.ToUpper() == RoleConsts.Admin.ToUpper()));
             var courseDtos = _mapper.Map<List<CourseDto>>(items);
             var courseIds = courseDtos.Select(c => c.Id).ToList();
 
@@ -83,29 +82,10 @@ namespace Dev.Acadmy.Courses
             var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(courseIds);
             var subscriberCountsDic = await _courseStudentRepository.GetTotalSubscribersPerCourseAsync(courseIds);
 
-            //// 2. جلب روابط اليوتيوب المتاحة في القائمة
-            //var youtubeUrls = courseDtos
-            //    .Where(c => c.HasYouTubeVideo && !string.IsNullOrEmpty(c.YouTubeVideoUrl))
-            //    .Select(c => c.YouTubeVideoUrl!)
-            //    .ToList();
-
-            //// 3. جلب بيانات اليوتيوب كـ Dictionary من المانجر
-            //var youtubeDataDic = await _youtubeManager.GetQualitiesDictAsync(youtubeUrls);
-
             foreach (var d in courseDtos)
             {
                 d.LogoUrl = mediaItemDic.GetValueOrDefault(d.Id) ?? "";
                 d.SubscriberCount = subscriberCountsDic.GetValueOrDefault(d.Id, 0);
-
-                //// 4. ربط بيانات اليوتيوب باستخدام المابر
-                //if (d.HasYouTubeVideo && !string.IsNullOrEmpty(d.YouTubeVideoUrl))
-                //{
-                //    if (youtubeDataDic.TryGetValue(d.YouTubeVideoUrl, out var youtubeResult) && youtubeResult != null)
-                //    {
-                //        // استخدام المابر للتحويل من Entity/Result إلى Dto
-                //        d.YoutubeVideoResultDto = _mapper.Map<YoutubeVideoResultDto>(youtubeResult);
-                //    }
-                //}
             }
 
             return new PagedResultDto<CourseDto>(totalCount, courseDtos);

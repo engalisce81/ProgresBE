@@ -18,7 +18,7 @@ namespace Dev.Acadmy.Courses
         public Guid UserId { get; set; }
         public string UserName { get; set; }
         public string TeacherLogoUrl { get; set; }
-        public float Rating { get; set; } // average rating
+        public double Rating { get; set; } // average rating
         public Guid? CollegeId { get; set; }
         public string CollegeName { get; set; }
         public Guid? SubjectId { get; set; }

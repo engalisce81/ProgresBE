@@ -5,6 +5,7 @@ using Dev.Acadmy.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
@@ -105,7 +106,6 @@ namespace Dev.Acadmy.Chats
             return messageDto;
 
         }
-
         [Authorize]
         public async Task<PagedResultDto<ChatMessageDto>> GetMessagesAsync(
             Guid receverId,
@@ -116,7 +116,7 @@ namespace Dev.Acadmy.Chats
             var skipCount = (pageNumber - 1) * pageSize;
             var query = await _chatRepo.GetQueryableAsync();
 
-            // فلترة الرسائل الخاصة بالمستلم (سواء كان كورس أو مستخدم)
+            // 1. فلترة الرسائل الخاصة بالمستلم
             query = query.Where(x => x.ReceverId == receverId);
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -126,29 +126,39 @@ namespace Dev.Acadmy.Chats
 
             var totalCount = await query.CountAsync();
 
-            // جلب الرسائل
+            // 2. جلب الرسائل (مرتبة من الأحدث إلى الأقدم عادة في الشات)
             var messages = await query
+                .OrderByDescending(x => x.CreationTime) // ترتيب تنازلي لرؤية أحدث الرسائل
                 .Skip(skipCount)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // جلب معرفات المرسلين للحصول على صورهم دفعة واحدة (Batch Request)
+            // 3. جلب معرفات المرسلين الفريدة
             var senderIds = messages.Select(x => x.SenderId).Distinct().ToList();
 
-            // استخدام القاموس (Dictionary) الذي يربط الـ RefId بالـ Url
+            // 4. جلب الصور دفعة واحدة (القاموس الحالي)
             var mediItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(senderIds);
 
-            // تحويل النتائج إلى DTO ودمج الصورة من القاموس
+            // 5. الحل: جلب أسماء المرسلين دفعة واحدة من جدول المستخدمين
+            // نفترض أنك تستخدم IRepository<IdentityUser, Guid> _userRepository
+            var usersDic = await (await _userRepository.GetQueryableAsync())
+                .Where(u => senderIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Name }) // جلب الحقول المطلوبة فقط
+                .ToDictionaryAsync(u => u.Id, u => u.Name);
+
+            // 6. تحويل النتائج ودمج الاسم والصورة
             var dtos = messages.Select(x => new ChatMessageDto
             {
                 Id = x.Id,
                 SenderId = x.SenderId,
+                // نبحث في قاموس المستخدمين عن الاسم
+                SenderName = usersDic.GetValueOrDefault(x.SenderId) ?? "Unknown User",
                 Message = x.Message,
                 CreationTime = x.CreationTime,
                 ReceverId = x.ReceverId,
-                IsInstructor=x.IsSenderInstructor,
-                // هنا الحل: نبحث في القاموس عن الـ Url باستخدام الـ SenderId
-                LogoUrl = mediItemDic.ContainsKey(x.SenderId) ? mediItemDic[x.SenderId] : string.Empty
+                IsInstructor = x.IsSenderInstructor,
+                // نبحث في قاموس الصور عن الرابط
+                LogoUrl = mediItemDic.GetValueOrDefault(x.SenderId) ?? string.Empty
             }).ToList();
 
             return new PagedResultDto<ChatMessageDto>(totalCount, dtos);
