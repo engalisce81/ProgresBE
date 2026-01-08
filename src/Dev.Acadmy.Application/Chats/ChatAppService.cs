@@ -128,7 +128,6 @@ namespace Dev.Acadmy.Chats
 
             // 2. جلب الرسائل (مرتبة من الأحدث إلى الأقدم عادة في الشات)
             var messages = await query
-                .OrderByDescending(x => x.CreationTime) // ترتيب تنازلي لرؤية أحدث الرسائل
                 .Skip(skipCount)
                 .Take(pageSize)
                 .ToListAsync();
