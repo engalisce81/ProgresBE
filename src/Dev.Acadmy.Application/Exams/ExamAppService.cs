@@ -180,7 +180,6 @@ namespace Dev.Acadmy.Exams
             var examStudent = await _examStudentRepository.FirstOrDefaultAsync(x =>
                 x.ExamId == examId && x.UserId == userId);
 
-            if (examStudent == null) throw new EntityNotFoundException();
 
             return new ExamStudentStatusDto
             {
