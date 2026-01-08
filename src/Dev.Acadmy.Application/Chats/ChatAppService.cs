@@ -41,7 +41,7 @@ namespace Dev.Acadmy.Chats
             var senderId = CurrentUser.GetId();
 
             // 1. تحديد هل المرسل Instructor (من الـ Token مباشرة للأداء)
-            var isSenderInstructor = CurrentUser.IsInRole(RoleConsts.Teacher.ToLower());
+            var isSenderInstructor = CurrentUser.IsInRole(RoleConsts.Teacher);
 
             // 3. حفظ الرسالة في قاعدة البيانات
             var chatMsg = new ChatMessage

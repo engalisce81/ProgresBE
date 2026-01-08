@@ -174,21 +174,40 @@ namespace Dev.Acadmy.Exams
             return new ResponseApi<ExamStudentResultDto> { Data = result, Success = true };
         }
         [Authorize]
-        public async Task<ExamStudentStatusDto> GetExamStudentStatusAsync(Guid examId)
+        public async Task<ResponseApi<ExamStudentStatusDto>> GetExamStudentStatusAsync(Guid examId)
         {
-            var userId = CurrentUser.GetId(); // الحصول على الـ UserId من الـ Session
+            var userId = CurrentUser.GetId(); // تأكد من حقن الخدمة بشكل صحيح
+
             var examStudent = await _examStudentRepository.FirstOrDefaultAsync(x =>
                 x.ExamId == examId && x.UserId == userId);
 
-
-            return new ExamStudentStatusDto
+if (examStudent == null)
+    {
+        return new ResponseApi<ExamStudentStatusDto>
+        {
+            Success = false,
+            Message = "No exam record found for this student.",
+            Data = null
+        };
+    }
+            // بناء الـ DTO
+            var statusDto = new ExamStudentStatusDto
             {
                 ExamId = examStudent.ExamId,
                 IsPassed = examStudent.IsPassed,
                 Score = examStudent.Score,
                 IsCertificateIssued = examStudent.IsCertificateIssued,
                 CanRequestNow = examStudent.CanRequestCertificate(),
-                NextAvailableDate = examStudent.LastCertificateRequestDate?.AddDays(1)
+                NextAvailableDate = examStudent.LastCertificateRequestDate?.AddDays(1),
+                FinishedAt = examStudent.FinishedAt,
+            };
+
+            // إرجاع استجابة ناجحة مع البيانات
+            return new ResponseApi<ExamStudentStatusDto>
+            {
+                Success = true,
+                Message = "Success",
+                Data = statusDto
             };
         }
 
