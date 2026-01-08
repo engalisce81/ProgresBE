@@ -180,6 +180,8 @@ namespace Dev.Acadmy.Chapters
                         YouTubeVideoUrl = l.YouTubeVideoUrl,
                         HasDriveVideo = l.HasDriveVideo,
                         HasYouTubeVideo = l.HasYouTubeVideo,
+                        HasTelegramVideo = l.HasTelegramVideo,
+                        TelegramVideoUrl = l.TelegramVideoUrl,
                         IsQuizRequired = l.IsRequiredQuiz,
                         PdfUrls = lectureMediaDict.ContainsKey(l.Id) ? new List<string> { lectureMediaDict[l.Id] } : new List<string>(),
                         Quiz = activeQuiz == null ? new QuizInfoDto { Title = "لا يوجد كويز متاح", QuizId = Guid.Empty } : new QuizInfoDto
