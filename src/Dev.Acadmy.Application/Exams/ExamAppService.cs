@@ -181,17 +181,15 @@ namespace Dev.Acadmy.Exams
             var examStudent = await _examStudentRepository.FirstOrDefaultAsync(x =>
                 x.ExamId == examId && x.UserId == userId);
 
-            // حالة: الطالب لم يدخل الامتحان بعد أو لا يوجد سجل
-            if (examStudent == null)
-            {
-                return new ResponseApi<ExamStudentStatusDto>
-                {
-                    Success = false,
-                    Message = "No exam record found for this student.",
-                    Data = null
-                };
-            }
-
+if (examStudent == null)
+    {
+        return new ResponseApi<ExamStudentStatusDto>
+        {
+            Success = false,
+            Message = "No exam record found for this student.",
+            Data = null
+        };
+    }
             // بناء الـ DTO
             var statusDto = new ExamStudentStatusDto
             {
