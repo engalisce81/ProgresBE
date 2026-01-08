@@ -69,6 +69,7 @@ namespace Dev.Acadmy.Repositories
                                    .Include(x => x.User)
                                    .Include(x=>x.Chapters).ThenInclude(x=>x.Lectures)
                                    .Include(x => x.Subject).ThenInclude(x=>x.GradeLevel)
+                                   .Include(x=>x.Feedbacks)
                                    .WhereIf(!isAdmin, x => true) // كود توضيحي لو أردت إضافة شروط إضافية
                                    .OrderByDescending(x => x.CreationTime)
                                    .PageBy(skipCount, maxResultCount)

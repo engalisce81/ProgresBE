@@ -26,8 +26,8 @@ namespace Dev.Acadmy.Configuration
 
             builder.HasOne(q => q.Lecture)
                  .WithMany(l => l.Quizzes)
-                 .HasForeignKey(l => l.LectureId)
-                 .OnDelete(DeleteBehavior.Cascade);
+                 .HasForeignKey(l => l.LectureId).IsRequired(false)
+                 .OnDelete(DeleteBehavior.SetNull);
         }
     }
 

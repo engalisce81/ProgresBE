@@ -16,8 +16,18 @@ namespace Dev.Acadmy.Configuration
         {
             builder.ToTable(AcadmyConsts.DbTablePrefix + "LectureStudents" + AcadmyConsts.DbTablePrefix);
             builder.ConfigureByConvention();
-            builder.HasOne(x => x.Lecture).WithMany().HasForeignKey(x => x.LectureId);
-            builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId);
+            // ضبط الحذف المتتالي للمحاضرة
+            builder.HasOne(x => x.Lecture)
+                   .WithMany() // أو .WithMany(l => l.LectureStudents) إذا كانت الـ Collection معرفة
+                   .HasForeignKey(x => x.LectureId)
+                   .OnDelete(DeleteBehavior.Cascade); // هذا السطر هو المطلوب لمسح السجل تلقائياً
+
+            // بالنسبة للمستخدم، يفضل غالباً استخدام Restrict أو NoAction 
+            // لمنع حذف المستخدم إذا كان له سجلات حضور (أمان للبيانات)
+            builder.HasOne(x => x.User)
+                   .WithMany()
+                   .HasForeignKey(x => x.UserId)
+                   .OnDelete(DeleteBehavior.NoAction);
 
         }
     }

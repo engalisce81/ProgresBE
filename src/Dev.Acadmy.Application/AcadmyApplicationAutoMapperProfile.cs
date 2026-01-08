@@ -55,7 +55,15 @@ public class AcadmyApplicationAutoMapperProfile : Profile
          .ForMember(dest => dest.GradeLevelName,
                     opt => opt.MapFrom(src => (src.Subject != null && src.Subject.GradeLevel != null)
                         ? src.Subject.GradeLevel.Name
-                        : string.Empty));
+                        : string.Empty))
+         .ForMember(dest => dest.UnvirsityName,
+                    opt => opt.MapFrom(src => (src.College != null && src.College.University != null)
+                        ? src.College.University.Name
+                        : string.Empty)).
+         ForMember(dest => dest.Rating,
+                    opt => opt.MapFrom(src => (src.Feedbacks != null && src.Feedbacks.Any(r => r.IsAccept))
+                       ? src.Feedbacks.Where(r => r.IsAccept).Average(r => r.Rating)
+                       : 0));
         // Course
         CreateMap<CreateUpdateCourseDto, Entities.Courses.Entities.Course>();
         // Chapter
