@@ -103,7 +103,7 @@ namespace Dev.Acadmy.Services.Courses
                 await _feedbackManager.CheckDeletePolicyAsync(
                     id,
                     CurrentUser.GetId(),
-                    CurrentUser.IsInRole(RoleConsts.Admin)
+                    CurrentUser.IsInRole(RoleConsts.Admin.ToLower())
                 );
 
                 await _feedbackRepo.DeleteAsync(id);
