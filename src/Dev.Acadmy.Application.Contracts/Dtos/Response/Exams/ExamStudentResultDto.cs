@@ -11,6 +11,9 @@ namespace Dev.Acadmy.Dtos.Response.Exams
         public Guid ExamId { get; set; }
         public string ExamTitle { get; set; }
         public double StudentScore { get; set; }
+        public double ExamScore { get; set; }
+        public double PassScore { get; set; }
+        public int TotalQuestions { get; set; }
         public bool IsPassed { get; set; }
         public DateTime FinishedAt { get; set; }
         public List<ExamAnswerDetailDto> Answers { get; set; } = new();

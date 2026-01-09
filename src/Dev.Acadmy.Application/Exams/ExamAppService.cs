@@ -131,32 +131,36 @@ namespace Dev.Acadmy.Exams
                     .ThenInclude(q => q.QuestionType)
                 .Where(x => x.ExamStudentId == examStudent.Id)
                 .ToListAsync();
-
+            // جلب الـ IDs الفريدة فقط للأسئلة لضمان عدم تكرار الاستعلام في الـ Dictionary
+            var questionIds = answers.Select(x => x.QuestionId).Distinct().ToList();
+            var mediaItemDic = await _mediaItemRepository.GetUrlDictionaryByRefIdsAsync(questionIds);
             var result = new ExamStudentResultDto
             {
                 ExamId = examStudent.ExamId,
-                ExamTitle = examStudent.Exam?.Name??string.Empty,
+                ExamTitle = examStudent.Exam?.Name ?? string.Empty,
                 StudentScore = examStudent.Score,
                 IsPassed = examStudent.IsPassed,
                 FinishedAt = examStudent.FinishedAt,
-                Answers = answers.Select(a => {
+                ExamScore = examStudent.Exam?.Score ?? 0,
+                PassScore = examStudent?.Exam?.PassScore ?? 0,
+                
+                Answers = answers.Select(a =>
+                {
                     // استخراج الإجابة الصحيحة من قاعدة البيانات
                     var correctAnswer = a.Question.QuestionAnswers.FirstOrDefault(qa => qa.IsCorrect);
-
+                    mediaItemDic.TryGetValue(a.QuestionId, out var logoUrl);
                     return new ExamAnswerDetailDto
                     {
                         QuestionId = a.QuestionId,
-                        QuestionText = a.Question?.Title?? string.Empty,
-                        QuestionType = a.Question?.QuestionType?.Name?? string.Empty,
-
-                        // إجابة الطالب
+                        QuestionText = a.Question?.Title ?? string.Empty,
+                        QuestionType = a.Question?.QuestionType?.Name ?? string.Empty,
+                        LogoUrl = logoUrl ?? "",   // إجابة ا=لطالب
                         StudentTextAnswer = a.TextAnswer,
                         StudentSelectedAnswerId = a.SelectedAnswerId,
 
                         // الإجابة الصحيحة (للمقارنة في الواجهة)
                         CorrectSelectedAnswerId = correctAnswer?.Id,
                         CorrectTextAnswer = correctAnswer?.Answer,
-
                         // قائمة الخيارات كاملة
                         AllOptions = a.Question.QuestionAnswers.Select(o => new Dtos.Response.Exams.ExamQuestionAnswerDto
                         {
@@ -170,7 +174,6 @@ namespace Dev.Acadmy.Exams
                     };
                 }).ToList()
             };
-
             return new ResponseApi<ExamStudentResultDto> { Data = result, Success = true };
         }
         [Authorize]

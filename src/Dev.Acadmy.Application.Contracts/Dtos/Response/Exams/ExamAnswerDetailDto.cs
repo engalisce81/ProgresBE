@@ -11,7 +11,7 @@ namespace Dev.Acadmy.Dtos.Response.Exams
         public Guid QuestionId { get; set; }
         public string QuestionText { get; set; }
         public string QuestionType { get; set; }
-
+        public string LogoUrl { get; set; }
         // بيانات الطالب
         public string? StudentTextAnswer { get; set; }
         public Guid? StudentSelectedAnswerId { get; set; }

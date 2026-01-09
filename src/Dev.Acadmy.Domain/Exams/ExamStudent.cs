@@ -13,7 +13,7 @@ namespace Dev.Acadmy.Exams
         public double Score { get; set; }
         public int TryCount { get; set; }
         public bool IsPassed { get; set; }
-        public DateTime FinishedAt { get; set; }
+        public DateTime FinishedAt { get; set; }= DateTime.Now;
 
         // الحقول الجديدة
         public bool IsCertificateIssued { get; private set; }

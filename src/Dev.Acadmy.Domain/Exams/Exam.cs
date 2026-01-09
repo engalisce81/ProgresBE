@@ -15,6 +15,7 @@ namespace Dev.Acadmy.Exams
         public int TimeExam { get; set; }
         public int Score { get; set; }
         public bool IsActive {  get; set; }
+        public double PassScore { get; set; }
         public Guid CourseId { get; set; }
         [ForeignKey(nameof(CourseId))]
         public Entities.Courses.Entities.Course Course { get; set; }  

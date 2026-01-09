@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Identity;
@@ -528,7 +529,7 @@ namespace Dev.Acadmy.Quizzes
 
                 var examData = await _examQuestionRepository.GetQuestionsByExamIdAsync(input.QuizId);
                 targetQuestions = examData.Select(x => x.Question).ToList();
-                successRate = 50.0; // أو اجلبها من جدول الامتحان إذا كانت موجودة
+                successRate = exam.PassScore; // أو اجلبها من جدول الامتحان إذا كانت موجودة
             }
             else
             {
@@ -656,10 +657,28 @@ namespace Dev.Acadmy.Quizzes
 
             if (isExam)
             {
-                var examStudent = await _examStudentRepository.GetAsync(studentRecordId);
-                examStudent.Score = studentScore;
-                examStudent.IsPassed = isPassed;
-                await _examStudentRepository.UpdateAsync(examStudent);
+                // 1. جلب البيانات مع الـ Include المناسب
+                var examStudent = await (await _examStudentRepository.GetQueryableAsync())
+                    .Include(x => x.Exam)
+                    .FirstOrDefaultAsync(x => x.Id == studentRecordId);
+
+                // 2. التحقق من وجود السجل ومن وجود بيانات الامتحان المرتبطة به
+                if (examStudent != null && examStudent.Exam != null)
+                {
+                    // حساب الدرجة بناءً على النسبة المئوية
+                    // ملحوظة: تأكد أن Score من نوع double أو decimal لتجنب مشاكل قسمة الأعداد الصحيحة
+                    examStudent.Score = studentScore * (examStudent.Exam.Score / 100.0);
+
+                    examStudent.IsPassed = isPassed;
+
+                    // 3. تحديث البيانات
+                    await _examStudentRepository.UpdateAsync(examStudent);
+                }
+                else
+                {
+                    // يمكنك هنا إضافة Log أو التعامل مع حالة عدم وجود البيانات
+                     throw new EntityNotFoundException("Exam or Student record not found.");
+                }
             }
             else
             {
