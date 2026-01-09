@@ -139,10 +139,11 @@ namespace Dev.Acadmy.Exams
                 StudentScore = examStudent.Score,
                 IsPassed = examStudent.IsPassed,
                 FinishedAt = examStudent.FinishedAt,
+                ExamScore = examStudent.Exam?.Score?? 0,
+                PassScore = examStudent?.Exam?.PassScore??0,
                 Answers = answers.Select(a => {
                     // استخراج الإجابة الصحيحة من قاعدة البيانات
                     var correctAnswer = a.Question.QuestionAnswers.FirstOrDefault(qa => qa.IsCorrect);
-
                     return new ExamAnswerDetailDto
                     {
                         QuestionId = a.QuestionId,
@@ -156,7 +157,6 @@ namespace Dev.Acadmy.Exams
                         // الإجابة الصحيحة (للمقارنة في الواجهة)
                         CorrectSelectedAnswerId = correctAnswer?.Id,
                         CorrectTextAnswer = correctAnswer?.Answer,
-
                         // قائمة الخيارات كاملة
                         AllOptions = a.Question.QuestionAnswers.Select(o => new Dtos.Response.Exams.ExamQuestionAnswerDto
                         {
@@ -170,7 +170,6 @@ namespace Dev.Acadmy.Exams
                     };
                 }).ToList()
             };
-
             return new ResponseApi<ExamStudentResultDto> { Data = result, Success = true };
         }
         [Authorize]
