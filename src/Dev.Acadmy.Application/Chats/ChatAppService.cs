@@ -127,7 +127,7 @@ namespace Dev.Acadmy.Chats
             var totalCount = await query.CountAsync();
 
             // 2. جلب الرسائل (مرتبة من الأحدث إلى الأقدم عادة في الشات)
-            var messages = await query
+            var messages = await query.OrderByDescending(x => x.CreationTime)           
                 .Skip(skipCount)
                 .Take(pageSize)
                 .ToListAsync();
