@@ -421,6 +421,10 @@ namespace Dev.Acadmy.Entities.Courses.Managers
                         Content = l.Content,
                         YouTubeVideoUrl = l.YouTubeVideoUrl,
                         DriveVideoUrl = l.DriveVideoUrl,
+                        HasDriveVideo =l.HasDriveVideo,
+                        HasYouTubeVideo = l.HasYouTubeVideo,
+                        HasTelegramVideo = l.HasTelegramVideo,
+                        TelegramVideoUrl = l.TelegramVideoUrl,
                         Quiz = quizDto
                     };
 
