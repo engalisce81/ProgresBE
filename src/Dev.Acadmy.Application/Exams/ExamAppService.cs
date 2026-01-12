@@ -161,6 +161,7 @@ namespace Dev.Acadmy.Exams
                         // الإجابة الصحيحة (للمقارنة في الواجهة)
                         CorrectSelectedAnswerId = correctAnswer?.Id,
                         CorrectTextAnswer = correctAnswer?.Answer,
+                        ScoreTotal = a.Question?.Score ?? 0,
                         // قائمة الخيارات كاملة
                         AllOptions = a.Question.QuestionAnswers.Select(o => new Dtos.Response.Exams.ExamQuestionAnswerDto
                         {

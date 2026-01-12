@@ -25,5 +25,6 @@ namespace Dev.Acadmy.Dtos.Response.Exams
 
         public double ScoreObtained { get; set; }
         public bool IsCorrect { get; set; }
+        public double ScoreTotal { get; set; }
     }
 }
