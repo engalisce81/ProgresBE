@@ -85,12 +85,12 @@ public class AcadmyHttpApiHostModule : AbpModule
         {
             PreConfigure<AbpOpenIddictAspNetCoreOptions>(options =>
             {
-                options.AddDevelopmentEncryptionAndSigningCertificate = false;
+                options.AddDevelopmentEncryptionAndSigningCertificate = true;
             });
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+              //  serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
                 serverBuilder.UseAspNetCore().EnableTokenEndpointPassthrough().EnableAuthorizationEndpointPassthrough();
                 serverBuilder.SetIssuer(new Uri(configuration["AuthServer:Authority"]!));
 
